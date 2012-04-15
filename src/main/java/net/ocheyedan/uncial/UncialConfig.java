@@ -77,6 +77,36 @@ public final class UncialConfig {
      */
     public static final Comparator<String> DEFAULT_LEVEL_COMPARATOR = new Comparator<String>() {
         @Override public int compare(String left, String right) {
+            // the natively supported uncial levels are ordered (descending)
+            // trace, debug, info, warn, error
+            if (Logger.trace.equals(left)) {
+                // either equal to trace or should be negative
+                return Math.abs(left.compareTo(right)) * -1;
+            } else if (Logger.trace.equals(right)) {
+                return 1; // left is not trace from above and so right < left
+            } else if (Logger.debug.equals(left)) {
+                // either equal to debug (right is definitely not trace from above) or should be negative
+                return Math.abs(left.compareTo(right)) * -1;
+            } else if (Logger.debug.equals(right)) {
+                return 1; // left is not trace/debug from above and so right < left
+            } else if (Logger.info.equals(left)) {
+                // either equal to info (right is definitely not trace/debug from above) or should be negative
+                return Math.abs(left.compareTo(right)) * -1;
+            } else if (Logger.info.equals(right)) {
+                return 1; // left is not trace/debug/info from above and so right < left
+            } else if (Logger.warn.equals(left)) {
+                // either equal to warn (right is definitely not trace/debug/info from above) or should be negative
+                return Math.abs(left.compareTo(right)) * -1;
+            } else if (Logger.warn.equals(right)) {
+                return 1; // left is not trace/debug/info/warn from above and so right < left
+            } else if (Logger.error.equals(left)) {
+                // either equal to error (right is definitely not trace/debug/info/warn from above) or should be negative
+                return Math.abs(left.compareTo(right)) * -1;
+            } else if (Logger.error.equals(right)) {
+                return 1; // left is not trace/debug/info/warn/error from above and so right < left
+            }
+            // Both left & right are user types, by default user types have highest order so as to never exclude them.
+            // Users should implement their own Comparator if this behavior is not desired. Delegate to natural ordering
             return left.compareTo(right);
         }
     };
@@ -127,6 +157,10 @@ public final class UncialConfig {
     }
     
     boolean needsFileName(Class<?> whenLogging) {
+        return false; // TODO
+    }
+
+    boolean needsThreadName(Class<?> whenLogging) {
         return false; // TODO
     }
 

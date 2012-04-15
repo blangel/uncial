@@ -7,6 +7,8 @@ package net.ocheyedan.uncial;
  * 
  * A convenience class in which users may log statically yet still get information about which {@link Class}
  * did the logging.
+ * There is a performance penalty to this convenience, so if performance is critical, get a handle to a class-specific
+ * {@link Logger} once ({@link net.ocheyedan.uncial.Loggers#get()}) and invoke via it.
  */
 public final class Log {
     

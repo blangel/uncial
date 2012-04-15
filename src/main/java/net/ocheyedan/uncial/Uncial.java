@@ -56,7 +56,7 @@ final class Uncial implements Logger {
         log(Logger.error, message, params);
     }
 
-    @Override public void error(Throwable t) {
+    @Override public final void error(Throwable t) {
         // TODO
     }
 
