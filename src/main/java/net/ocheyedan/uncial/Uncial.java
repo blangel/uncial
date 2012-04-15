@@ -28,11 +28,12 @@ final class Uncial implements Logger {
     }
 
     @Override public void log(String level, String message, Object ... params) {
+        long now = System.currentTimeMillis();
         // check level before delegation to {@link #log(Meta, String, String, Object[]) as creation of Meta may be expensive
         if (!Loggers.isEnabled(level)) {
             return;
         }
-        log(Loggers.meta(1, loggingFor), level, message, params);
+        log(Loggers.meta(1, loggingFor, now), level, message, params);
     }
 
     @Override public final void trace(String message, Object ... params) {
@@ -56,11 +57,12 @@ final class Uncial implements Logger {
     }
 
     @Override public void error(Throwable t) {
-        
+        // TODO
     }
 
     @Override public final void error(Throwable t, String message, Object ... params) {
+        long now = System.currentTimeMillis();
         error(t);
-        log(Loggers.from(t), Logger.error, message, params);
+        log(Loggers.from(t, Thread.currentThread().getName(), now), Logger.error, message, params);
     }
 }

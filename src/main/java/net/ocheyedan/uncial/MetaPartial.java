@@ -29,4 +29,12 @@ abstract class MetaPartial implements Meta {
     @Override public String invokingFileName() {
         return null;
     }
+
+    @Override public String invokingThreadName() {
+        return null;
+    }
+
+    @Override public long invokingEpochTime() {
+        return 0;
+    }
 }

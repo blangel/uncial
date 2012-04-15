@@ -10,7 +10,9 @@ import java.io.Serializable;
  * A logging event to be passed through an {@link Appender} pipeline.
  */
 public final class LogEvent implements Serializable {
-    
+
+    private static final long serialVersionUID = -7805117218973896860L;
+
     public final Meta meta;
  
     public final String level;

@@ -5,7 +5,7 @@ package net.ocheyedan.uncial;
  * Date: 3/10/12
  * Time: 7:17 AM
  * 
- * A convenience class in which users may log statically yet still get information back about which {@link Class}
+ * A convenience class in which users may log statically yet still get information about which {@link Class}
  * did the logging.
  */
 public final class Log {
@@ -15,7 +15,7 @@ public final class Log {
     }
 
     public static void log(String level, String message, Object ... params) {
-        log(Loggers.meta(2, Loggers.invokingLogClass()), level, message, params);
+        log(Loggers.meta(2, Loggers.invokingLogClass(), System.currentTimeMillis()), level, message, params);
     }
 
     public static void trace(String message, Object ... params) {
@@ -43,8 +43,9 @@ public final class Log {
     }
 
     public static void error(Throwable t, String message, Object ... params) {
+        long now = System.currentTimeMillis();
         error(t);
-        log(Loggers.from(t), Logger.error, message, params);
+        log(Loggers.from(t, Thread.currentThread().getName(), now), Logger.error, message, params);
     }
 
     private Log() { }

@@ -19,11 +19,18 @@ final class MetaComplete implements Meta {
     
     private final String invokingFileName;
 
-    MetaComplete(Class<?> invokingClass, String invokingMethodName, Integer invokingLineNumber, String invokingFileName) {
+    private final String threadName;
+
+    private final long epochTime;
+
+    MetaComplete(Class<?> invokingClass, String invokingMethodName, Integer invokingLineNumber, String invokingFileName,
+                 String threadName, long epochTime) {
         this.invokingClass = invokingClass;
         this.invokingMethodName = invokingMethodName;
         this.invokingLineNumber = invokingLineNumber;
         this.invokingFileName = invokingFileName;
+        this.threadName = threadName;
+        this.epochTime = epochTime;
     }
 
     @Override public Class<?> invokingClass() {
@@ -45,5 +52,12 @@ final class MetaComplete implements Meta {
     @Override public String invokingFileName() {
         return this.invokingFileName;
     }
-    
+
+    @Override public String invokingThreadName() {
+        return threadName;
+    }
+
+    @Override public long invokingEpochTime() {
+        return epochTime;
+    }
 }
