@@ -1,8 +1,13 @@
 package net.ocheyedan.uncial;
 
+import org.junit.Before;
 import org.junit.Test;
 
+import java.lang.reflect.Field;
+import java.util.concurrent.ConcurrentMap;
+
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 
 /**
@@ -11,6 +16,19 @@ import static junit.framework.Assert.assertTrue;
  * Time: 8:55 PM
  */
 public class UncialConfigTest {
+
+    private static class NestedClass { }
+
+    @Before
+    public void init() throws NoSuchFieldException, IllegalAccessException {
+        UncialConfig config = UncialConfig.get();
+        Field appenderConfigsField = UncialConfig.class.getDeclaredField("appenderConfigs");
+        appenderConfigsField.setAccessible(true);
+        ((ConcurrentMap) appenderConfigsField.get(config)).clear();
+        Field loggerConfigsField = UncialConfig.class.getDeclaredField("loggerConfigs");
+        loggerConfigsField.setAccessible(true);
+        ((ConcurrentMap) loggerConfigsField.get(config)).clear();
+    }
 
     @Test
     public void defaultLevelComparator() {
@@ -98,6 +116,200 @@ public class UncialConfigTest {
         assertTrue(result < 0);
 
         // TODO - needs to be more complicated as above is fine but need 'org.apache' to not include 'yyy.zzzz' / etc
+    }
+
+    @Test
+    public void isEnabled() {
+        UncialConfig uncialConfig = UncialConfig.get();
+        // the default is info, check above and below
+        assertFalse(uncialConfig.isEnabled(Logger.trace, UncialConfigTest.class));
+        assertFalse(uncialConfig.isEnabled(Logger.debug, UncialConfigTest.class));
+        assertTrue(uncialConfig.isEnabled(Logger.info, UncialConfigTest.class));
+        assertTrue(uncialConfig.isEnabled(Logger.warn, UncialConfigTest.class));
+        assertTrue(uncialConfig.isEnabled(Logger.error, UncialConfigTest.class));
+        assertTrue(uncialConfig.isEnabled("user type", UncialConfigTest.class));
+
+        // set default of UncialConfigTest to be trace
+        uncialConfig.setLevel(UncialConfigTest.class.getName(), Logger.trace);
+        assertTrue(uncialConfig.isEnabled(Logger.trace, UncialConfigTest.class));
+        assertTrue(uncialConfig.isEnabled(Logger.debug, UncialConfigTest.class));
+        assertTrue(uncialConfig.isEnabled(Logger.info, UncialConfigTest.class));
+        assertTrue(uncialConfig.isEnabled(Logger.warn, UncialConfigTest.class));
+        assertTrue(uncialConfig.isEnabled(Logger.error, UncialConfigTest.class));
+        assertTrue(uncialConfig.isEnabled("user type", UncialConfigTest.class));
+        // set default of UncialConfigTest to be error
+        uncialConfig.setLevel(UncialConfigTest.class.getName(), Logger.error);
+        assertFalse(uncialConfig.isEnabled(Logger.trace, UncialConfigTest.class));
+        assertFalse(uncialConfig.isEnabled(Logger.debug, UncialConfigTest.class));
+        assertFalse(uncialConfig.isEnabled(Logger.info, UncialConfigTest.class));
+        assertFalse(uncialConfig.isEnabled(Logger.warn, UncialConfigTest.class));
+        assertTrue(uncialConfig.isEnabled(Logger.error, UncialConfigTest.class));
+        assertTrue(uncialConfig.isEnabled("user type", UncialConfigTest.class));
+        // set default of UncialConfigTest to be a specific user-type
+        uncialConfig.setLevel(UncialConfigTest.class.getName(), "user type");
+        assertFalse(uncialConfig.isEnabled(Logger.trace, UncialConfigTest.class));
+        assertFalse(uncialConfig.isEnabled(Logger.debug, UncialConfigTest.class));
+        assertFalse(uncialConfig.isEnabled(Logger.info, UncialConfigTest.class));
+        assertFalse(uncialConfig.isEnabled(Logger.warn, UncialConfigTest.class));
+        assertFalse(uncialConfig.isEnabled(Logger.error, UncialConfigTest.class));
+        assertFalse(uncialConfig.isEnabled("different user type", UncialConfigTest.class)); // user-types by default are compared via String.compareTo
+        assertTrue(uncialConfig.isEnabled("user type", UncialConfigTest.class));
+        assertTrue(uncialConfig.isEnabled("z different user type", UncialConfigTest.class)); // user-types by default are compared via String.compareTo
+
+        // now test setting the level at a package granularity
+        uncialConfig.setLevel("net.ocheyedan", Logger.trace);
+        // more specific setting should still hold
+        assertFalse(uncialConfig.isEnabled(Logger.trace, UncialConfigTest.class));
+        assertFalse(uncialConfig.isEnabled(Logger.debug, UncialConfigTest.class));
+        assertFalse(uncialConfig.isEnabled(Logger.info, UncialConfigTest.class));
+        assertFalse(uncialConfig.isEnabled(Logger.warn, UncialConfigTest.class));
+        assertFalse(uncialConfig.isEnabled(Logger.error, UncialConfigTest.class));
+        assertFalse(uncialConfig.isEnabled("different user type", UncialConfigTest.class)); // user-types by default are compared via String.compareTo
+        assertTrue(uncialConfig.isEnabled("user type", UncialConfigTest.class));
+        assertTrue(uncialConfig.isEnabled("z different user type", UncialConfigTest.class)); // user-types by default are compared via String.compareTo
+        // but other classes should be at the Logger.trace level now
+        assertTrue(uncialConfig.isEnabled(Logger.trace, UncialConfig.class));
+        assertTrue(uncialConfig.isEnabled(Logger.debug, UncialConfig.class));
+        assertTrue(uncialConfig.isEnabled(Logger.info, UncialConfig.class));
+        assertTrue(uncialConfig.isEnabled(Logger.warn, UncialConfig.class));
+        assertTrue(uncialConfig.isEnabled(Logger.error, UncialConfig.class));
+        assertTrue(uncialConfig.isEnabled("user type", UncialConfig.class));
+        // up the level for a package above to see that this level 'masks' the previous one set
+        uncialConfig.setLevel("net.ocheyedan", Logger.warn);
+        assertFalse(uncialConfig.isEnabled(Logger.trace, UncialConfig.class));
+        assertFalse(uncialConfig.isEnabled(Logger.debug, UncialConfig.class));
+        assertFalse(uncialConfig.isEnabled(Logger.info, UncialConfig.class));
+        assertTrue(uncialConfig.isEnabled(Logger.warn, UncialConfig.class));
+        assertTrue(uncialConfig.isEnabled(Logger.error, UncialConfig.class));
+        assertTrue(uncialConfig.isEnabled("user type", UncialConfig.class));
+        // but still doesn't override the explicitly set level
+        assertFalse(uncialConfig.isEnabled(Logger.trace, UncialConfigTest.class));
+        assertFalse(uncialConfig.isEnabled(Logger.debug, UncialConfigTest.class));
+        assertFalse(uncialConfig.isEnabled(Logger.info, UncialConfigTest.class));
+        assertFalse(uncialConfig.isEnabled(Logger.warn, UncialConfigTest.class));
+        assertFalse(uncialConfig.isEnabled(Logger.error, UncialConfigTest.class));
+        assertFalse(uncialConfig.isEnabled("different user type", UncialConfigTest.class)); // user-types by default are compared via String.compareTo
+        assertTrue(uncialConfig.isEnabled("user type", UncialConfigTest.class));
+        assertTrue(uncialConfig.isEnabled("z different user type", UncialConfigTest.class)); // user-types by default are compared via String.compareTo
+
+        // test that NestedClass isn't interfered with by setting to its container
+        assertFalse(uncialConfig.isEnabled(Logger.trace, NestedClass.class));
+        assertFalse(uncialConfig.isEnabled(Logger.debug, NestedClass.class));
+        assertFalse(uncialConfig.isEnabled(Logger.info, NestedClass.class));
+        assertTrue(uncialConfig.isEnabled(Logger.warn, NestedClass.class));
+        assertTrue(uncialConfig.isEnabled(Logger.error, NestedClass.class));
+        assertTrue(uncialConfig.isEnabled("user type", NestedClass.class));
+        // set the NestedClass explicitly and ensure its setting doesn't interfere with its container or its related package's level
+        uncialConfig.setLevel(NestedClass.class.getName(), Logger.debug);
+        assertFalse(uncialConfig.isEnabled(Logger.trace, NestedClass.class));
+        assertTrue(uncialConfig.isEnabled(Logger.debug, NestedClass.class));
+        assertTrue(uncialConfig.isEnabled(Logger.info, NestedClass.class));
+        assertTrue(uncialConfig.isEnabled(Logger.warn, NestedClass.class));
+        assertTrue(uncialConfig.isEnabled(Logger.error, NestedClass.class));
+        assertTrue(uncialConfig.isEnabled("user type", NestedClass.class));
+        // ensure package level is fine
+        assertFalse(uncialConfig.isEnabled(Logger.trace, UncialConfig.class));
+        assertFalse(uncialConfig.isEnabled(Logger.debug, UncialConfig.class));
+        assertFalse(uncialConfig.isEnabled(Logger.info, UncialConfig.class));
+        assertTrue(uncialConfig.isEnabled(Logger.warn, UncialConfig.class));
+        assertTrue(uncialConfig.isEnabled(Logger.error, UncialConfig.class));
+        assertTrue(uncialConfig.isEnabled("user type", UncialConfig.class));
+        // and the container
+        assertFalse(uncialConfig.isEnabled(Logger.trace, UncialConfigTest.class));
+        assertFalse(uncialConfig.isEnabled(Logger.debug, UncialConfigTest.class));
+        assertFalse(uncialConfig.isEnabled(Logger.info, UncialConfigTest.class));
+        assertFalse(uncialConfig.isEnabled(Logger.warn, UncialConfigTest.class));
+        assertFalse(uncialConfig.isEnabled(Logger.error, UncialConfigTest.class));
+    }
+
+    @Test
+    public void needsFileName() {
+        Appender mock = new Appender() {
+            @Override public String getName() {
+                return null;
+            }
+            @Override public void handle(LogEvent logEvent) {
+            }
+        };
+        UncialConfig uncialConfig = UncialConfig.get();
+        // with no appenders
+        assertFalse(uncialConfig.needsFileName(UncialConfig.class));
+        // with appender without file-name need
+        uncialConfig.addAppender(mock);
+        assertFalse(uncialConfig.needsFileName(UncialConfig.class));
+        // add an appender which needs file-name
+        Appender mock1 = new Appender() {
+            @Override public String getName() {
+                return null;
+            }
+            @Override public void handle(LogEvent logEvent) {
+            }
+        };
+        uncialConfig.addAppender(mock1, "%F %m%n");
+        assertTrue(uncialConfig.needsFileName(UncialConfig.class));
+        // now, override with one which doesn't need file-name
+        uncialConfig.addAppender(mock1, "%T %m%n");
+        assertFalse(uncialConfig.needsFileName(UncialConfig.class));
+    }
+
+    @Test
+    public void needsLineNumber() {
+        Appender mock = new Appender() {
+            @Override public String getName() {
+                return null;
+            }
+            @Override public void handle(LogEvent logEvent) {
+            }
+        };
+        UncialConfig uncialConfig = UncialConfig.get();
+        // with no appenders
+        assertFalse(uncialConfig.needsLineNumber(UncialConfig.class));
+        // with appender without line-number need
+        uncialConfig.addAppender(mock);
+        assertFalse(uncialConfig.needsLineNumber(UncialConfig.class));
+        // add an appender which needs line-number
+        Appender mock1 = new Appender() {
+            @Override public String getName() {
+                return null;
+            }
+            @Override public void handle(LogEvent logEvent) {
+            }
+        };
+        uncialConfig.addAppender(mock1, "%L %m%n");
+        assertTrue(uncialConfig.needsLineNumber(UncialConfig.class));
+        // now, override with one which doesn't need line-number
+        uncialConfig.addAppender(mock1, "%T %m%n");
+        assertFalse(uncialConfig.needsLineNumber(UncialConfig.class));
+    }
+
+    @Test
+    public void needsMethodName() {
+        Appender mock = new Appender() {
+            @Override public String getName() {
+                return null;
+            }
+            @Override public void handle(LogEvent logEvent) {
+            }
+        };
+        UncialConfig uncialConfig = UncialConfig.get();
+        // with no appenders
+        assertFalse(uncialConfig.needsMethodName(UncialConfig.class));
+        // with appender without method-name need
+        uncialConfig.addAppender(mock);
+        assertFalse(uncialConfig.needsMethodName(UncialConfig.class));
+        // add an appender which needs method-name
+        Appender mock1 = new Appender() {
+            @Override public String getName() {
+                return null;
+            }
+            @Override public void handle(LogEvent logEvent) {
+            }
+        };
+        uncialConfig.addAppender(mock1, "%M %m%n");
+        assertTrue(uncialConfig.needsMethodName(UncialConfig.class));
+        // now, override with one which doesn't need file-name
+        uncialConfig.addAppender(mock1, "%T %m%n");
+        assertFalse(uncialConfig.needsMethodName(UncialConfig.class));
     }
 
 }

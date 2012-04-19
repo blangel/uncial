@@ -1,5 +1,8 @@
 package net.ocheyedan.uncial;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 /**
  * User: blangel
  * Date: 3/9/12
@@ -17,23 +20,23 @@ final class Uncial implements Logger {
     }
 
     @Override public void log(Meta meta, String level, String message, Object ... params) {
-        if (!Loggers.isEnabled(level)) {
+        if (!Loggers.isEnabled(level, loggingFor)) {
             return;
         }
         // this must be logged, so create formatted message now (as {@code params} may be mutable and modified by user
         // after method return).
         String formattedMessage = String.format(message, params);
         // create serializable and place in log-queue
-
+        Loggers.distribute(new LogEvent(meta, level, formattedMessage));
     }
 
     @Override public void log(String level, String message, Object ... params) {
         long now = System.currentTimeMillis();
         // check level before delegation to {@link #log(Meta, String, String, Object[]) as creation of Meta may be expensive
-        if (!Loggers.isEnabled(level)) {
+        if (!Loggers.isEnabled(level, loggingFor)) {
             return;
         }
-        log(Loggers.meta(1, loggingFor, now), level, message, params);
+        log(Loggers.meta(loggingFor, null, null, null, Thread.currentThread().getName(), now), level, message, params);
     }
 
     @Override public final void trace(String message, Object ... params) {
@@ -57,12 +60,33 @@ final class Uncial implements Logger {
     }
 
     @Override public final void error(Throwable t) {
-        // TODO
+        long now = System.currentTimeMillis();
+        // check level before logging as creation of error statement may be expensive
+        if (!Loggers.isErrorEnabled(loggingFor)) {
+            return;
+        }
+        // cannot use the Throwable directly as it doesn't contain the method/line/etc from which the log call originated
+        Meta meta = Loggers.meta(loggingFor, null, null, null, Thread.currentThread().getName(), now);
+        error(meta, t);
     }
 
     @Override public final void error(Throwable t, String message, Object ... params) {
         long now = System.currentTimeMillis();
-        error(t);
-        log(Loggers.from(t, Thread.currentThread().getName(), now), Logger.error, message, params);
+        // check level before logging as creation of error statement may be expensive
+        if (!Loggers.isErrorEnabled(loggingFor)) {
+            return;
+        }
+        // cannot use the Throwable directly as it doesn't contain the method/line/etc from which the log call originated
+        Meta meta = Loggers.meta(loggingFor, null, null, null, Thread.currentThread().getName(), now);
+        error(meta, t);
+        log(meta, Logger.error, message, params);
+    }
+
+    private void error(Meta meta, Throwable t) {
+        StringWriter stringWriter = new StringWriter();
+        PrintWriter writer = new PrintWriter(stringWriter);
+        t.printStackTrace(writer);
+        String stackTrace = stringWriter.toString();
+        log(meta, Logger.error, stackTrace);
     }
 }

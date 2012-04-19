@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * The singleton, thread-safe, configuration manager.  Configuration changes via {@literal JMX} are routed here.
  */
-public final class UncialConfig {
+public final class UncialConfig implements UncialConfigMBean {
 
     /**
      * An immutable structure containing {@link Appender} related configuration.
@@ -122,6 +122,21 @@ public final class UncialConfig {
         }
     };
 
+    /**
+     * The singleton instance, via the {@literal holder pattern}.
+     * @see {@literal http://en.wikipedia.org/wiki/Initialization-on-demand_holder_idiom}
+     */
+    private static final class Singleton {
+        private static final UncialConfig INSTANCE = new UncialConfig();
+    }
+
+    /**
+     * @return the singleton/thread-safe instance to use to configure logging.
+     */
+    public static UncialConfig get() {
+        return Singleton.INSTANCE;
+    }
+
     private final ConcurrentMap<String, AppenderConfig> appenderConfigs;
 
     private final AtomicReference<String> defaultLevel;
@@ -132,7 +147,7 @@ public final class UncialConfig {
 
     private final AtomicReference<Comparator<String>> loggerComparator;
 
-    public UncialConfig() {
+    private UncialConfig() {
         this.appenderConfigs = new ConcurrentHashMap<String, AppenderConfig>(2, 1.0f);
         this.defaultLevel = new AtomicReference<String>(DEFAULT_LEVEL);
         this.loggerConfigs = new ConcurrentHashMap<String, LoggerConfig>(16, 1.0f);
@@ -140,28 +155,67 @@ public final class UncialConfig {
         this.loggerComparator = new AtomicReference<Comparator<String>>(DEFAULT_LOGGER_COMPARATOR);
     }
 
+    /**
+     * @param level for which to check if {@code forClass} is enabled
+     * @param forClass for which to check if {@code level} is enabled
+     * @return true if logging is enabled for {@code forClass} at (or above) level {@code level}.
+     */
     boolean isEnabled(String level, Class<?> forClass) {
-        return false; // TODO
+        if ((level == null) || (forClass == null)) {
+            throw new NullPointerException("Level and Class must not be null.");
+        }
+        // first iteration will simply look up the fully qualified class name directly.  subsequent iterations will
+        // look by 'pealing-away' the class name itself and packages from the fully qualified class name
+        String forClassName = forClass.getName();
+        int lastPackageSplitIndex = forClassName.length();
+        while (lastPackageSplitIndex != -1) {
+            forClassName = forClassName.substring(0, lastPackageSplitIndex);
+            LoggerConfig loggerConfig = loggerConfigs.get(forClassName);
+            if (loggerConfig != null) {
+                return (getLevelComparator().compare(loggerConfig.associatedLevel, level) <= 0);
+            }
+            lastPackageSplitIndex = forClassName.lastIndexOf(".");
+        }
+        return (getLevelComparator().compare(getDefaultLevel(), level) <= 0); // not specified; compare against default
     }
 
-    boolean needsClassName(Class<?> whenLogging) {
-        return false; // TODO
-    }
-    
+    /**
+     * @param whenLogging NOT CURRENTLY USED
+     * @return true if when logging {@code whenLogging} the method name is needed for any appender configuration
+     */
     boolean needsMethodName(Class<?> whenLogging) {
-        return false; // TODO
-    }
-    
-    boolean needsLineNumber(Class<?> whenLogging) {
-        return false; // TODO
-    }
-    
-    boolean needsFileName(Class<?> whenLogging) {
-        return false; // TODO
+        return needs("%M", whenLogging);
     }
 
-    boolean needsThreadName(Class<?> whenLogging) {
-        return false; // TODO
+    /**
+     * @param whenLogging NOT CURRENTLY USED
+     * @return true if when logging {@code whenLogging} the line number is needed for any appender configuration
+     */
+    boolean needsLineNumber(Class<?> whenLogging) {
+        return needs("%L", whenLogging);
+    }
+
+    /**
+     * @param whenLogging NOT CURRENTLY USED
+     * @return true if when logging {@code whenLogging} the file name is needed for any appender configuration
+     */
+    boolean needsFileName(Class<?> whenLogging) {
+        return needs("%F", whenLogging);
+    }
+
+    /**
+     * @param format for which to check (the valid formats are those specified in the {@link #addAppender(Appender, String)},
+     *               i.e., {@literal %M}.
+     * @param whenLogging NOT CURRENTLY USED
+     * @return true if when logging {@code whenLogging} the specified {@code format} is needed for any appender configuration
+     */
+    private boolean needs(String format, Class<?> whenLogging) {
+        for (AppenderConfig config : this.appenderConfigs.values()) {
+            if (config.format.contains(format)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -169,6 +223,7 @@ public final class UncialConfig {
      * use the default format (i.e., {@link #DEFAULT_APPENDER_FORMAT}).
      * @param appender to receive log messages.
      */
+    @Override
     public void addAppender(Appender appender) {
         addAppender(appender, DEFAULT_APPENDER_FORMAT);
     }
@@ -193,6 +248,7 @@ public final class UncialConfig {
      * @param appender to receive log messages.
      * @param format for which to print log messages.
      */
+    @Override
     public void addAppender(Appender appender, String format) {
         if (appender == null) {
             return;
@@ -207,9 +263,8 @@ public final class UncialConfig {
      * before this method call there will be one after (equivalent to calling {@link #addAppender(Appender, String)}
      * @param forAppender for which to set {@code format}
      * @param format for which to print log messages.
-     *
-     * TODO - consider making another method with a String forAppender to facilitate JMX interaction
      */
+    @Override
     public void setFormat(Appender forAppender, String format) {
         addAppender(forAppender, format);
     }
@@ -219,6 +274,7 @@ public final class UncialConfig {
      * @param forClass the fully/partially qualified class name for which to assign {@code level}
      * @param level for which to log for classes matching {@code forClass}
      */
+    @Override
     public void setLevel(String forClass, String level) {
         if (forClass == null) {
             return;
@@ -235,6 +291,7 @@ public final class UncialConfig {
      * logging level is used when no specific level is set for a class on any of its appenders.
      * @param level to be the default log level.
      */
+    @Override
     public void setDefaultLevel(String level) {
         if ((level == null) || level.isEmpty()) {
             return;
@@ -261,6 +318,7 @@ public final class UncialConfig {
      * level comparator to ensure predictable results.
      * @param levelComparator which to use as the level comparator.
      */
+    @Override
     public void setLevelComparator(Comparator<String> levelComparator) {
         if (levelComparator == null) {
             return;
@@ -285,6 +343,7 @@ public final class UncialConfig {
      * precedence for any class whose name starts with 'org.apache.commons'.
      * @param loggerComparator which to use as the logging comparator.
      */
+    @Override
     public void setLoggerComparator(Comparator<String> loggerComparator) {
         if (loggerComparator == null) {
             return;
