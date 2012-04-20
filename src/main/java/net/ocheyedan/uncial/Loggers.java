@@ -3,10 +3,7 @@ package net.ocheyedan.uncial;
 import sun.reflect.Reflection;
 
 import java.util.Collection;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.*;
 
 /**
  * User: blangel
@@ -28,12 +25,20 @@ public final class Loggers {
         }
     });
 
+    private static final ConcurrentMap<Class<?>, Logger> loggers = new ConcurrentHashMap<Class<?>, Logger>();
+
     /**
      * @param forClass is the {@link Class} for which to perform logging
      * @return a {@link Logger} implementation specific to {@code forClass}
      */
-    public static Logger get(Class<?> forClass) { // TODO - cached logger
-        return new Uncial(forClass);
+    public static Logger get(Class<?> forClass) {
+        if (loggers.containsKey(forClass)) {
+            return loggers.get(forClass);
+        }
+        // eliminate possibility of ever returning a different instance of the same logging class
+        // constructing a logger for the same class is fine, but never return it.
+        loggers.putIfAbsent(forClass, new Uncial(forClass));
+        return loggers.get(forClass);
     }
 
     /**
