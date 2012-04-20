@@ -295,6 +295,18 @@ public final class UncialConfig implements UncialConfigMBean {
     }
 
     /**
+     * Calls {@link #setLevel(String, String)} using the {@link Class#getName()} value of {@code forClass}
+     * @param forClass the class for which to assign {@code level}
+     * @param level for which to log for {@code forClass}
+     */
+    public void setLevel(Class<?> forClass, String level) {
+        if (forClass == null) {
+            return;
+        }
+        setLevel(forClass.getName(), level);
+    }
+
+    /**
      * Sets {@code level} as the logging level for any class matching {@code forClass}
      * @param forClass the fully/partially qualified class name for which to assign {@code level}
      * @param level for which to log for classes matching {@code forClass}
