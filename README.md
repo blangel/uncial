@@ -1,7 +1,7 @@
 Overview
 --------
 
-Uncial is a fast and easy to use logging system.  It leverages features added in the 1.5 version of java to make it easier to use.  The goal is to be fast not "full featured."
+Uncial is a fast and easy to use logging system. The goal is to be fast and easy not "full featured."
 
 Features
 --------
@@ -15,13 +15,13 @@ Usage
 
 * Using a `Logger` Instance (same pattern as LOG4J or SLF4J): create a `Logger` instance based on the `Class`
 
-  $ private static final Logger LOG = Loggers.get(MyClass.class);
+  	$ private static final Logger LOG = Loggers.get(MyClass.class);
 
-  $ LOG.trace("Your os is '%s' and you have %d processors.", System.getProperty("os.name"), Runtime.getRuntime().availableProcessors());
+  	$ LOG.trace("Your os is '%s' and you have %d processors.", System.getProperty("os.name"), Runtime.getRuntime().availableProcessors());
 
 * Using the static `Log` Methods: same methods as the `Logger` interface but accessed statically without sacrificing the `Class` from which the log call originated (albeit at a slight performance penalty)! 
 
-  $ Log.trace("Your os is '%s' and you have %d processors.", System.getProperty("os.name"), Runtime.getRuntime().availableProcessors());
+  	$ Log.trace("Your os is '%s' and you have %d processors.", System.getProperty("os.name"), Runtime.getRuntime().availableProcessors());
 
 Configuration
 ---------------------
