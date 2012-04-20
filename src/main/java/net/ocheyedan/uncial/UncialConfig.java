@@ -1,6 +1,11 @@
 package net.ocheyedan.uncial;
 
+import net.ocheyedan.uncial.appender.Appender;
+
+import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
@@ -15,23 +20,43 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class UncialConfig implements UncialConfigMBean {
 
     /**
-     * An immutable structure containing {@link Appender} related configuration.
+     * An immutable structure containing {@link net.ocheyedan.uncial.appender.Appender} related configuration.
      */
-    private static final class AppenderConfig {
+    static final class AppenderConfig {
+
+        private static final ThreadLocal<SimpleDateFormat> dateFormatter = new ThreadLocal<SimpleDateFormat>() {
+            @Override protected SimpleDateFormat initialValue() {
+                return new SimpleDateFormat("MM/dd/yyyy HH:mm:ss.SSS");
+            }
+        };
+
         /**
          * An appender implementation
          */
-        private final Appender appender;
+        final Appender appender;
 
         /**
          * The format to use when handling log messages on {@link #appender}
          * @see {@link UncialConfig#addAppender(Appender, String)} for a description of the format.
          */
-        private final String format;
+        final String format;
 
         private AppenderConfig(Appender appender, String format) {
             this.appender = appender;
             this.format = format;
+        }
+
+        String format(LogEvent logEvent) {
+            String formatted = format.replaceAll("%t", logEvent.meta.invokingThreadName());
+            formatted = formatted.replaceAll("%F", logEvent.meta.invokingFileName());
+            formatted = formatted.replaceAll("%C", logEvent.meta.invokingClassName());
+            formatted = formatted.replaceAll("%M", logEvent.meta.invokingMethodName());
+            formatted = formatted.replaceAll("%L", String.valueOf(logEvent.meta.invokingLineNumber()));
+            formatted = formatted.replaceAll("%l", logEvent.level);
+            formatted = formatted.replaceAll("%d", dateFormatter.get().format(
+                    new Date(logEvent.meta.invokingEpochTime())));
+            formatted = formatted.replaceAll("%m", logEvent.message);
+            return formatted.replaceAll("%n", "\n");
         }
     }
 
@@ -358,4 +383,7 @@ public final class UncialConfig implements UncialConfigMBean {
         return this.loggerComparator.get();
     }
 
+    Collection<AppenderConfig> getAppenderConfigs() {
+        return this.appenderConfigs.values();
+    }
 }

@@ -2,6 +2,12 @@ package net.ocheyedan.uncial;
 
 import sun.reflect.Reflection;
 
+import java.util.Collection;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+
 /**
  * User: blangel
  * Date: 3/10/12
@@ -12,6 +18,15 @@ import sun.reflect.Reflection;
 public final class Loggers {
     
     static final Meta classProvider = getStaticMetaClassPartial();
+
+    private static final ExecutorService logEventExecutor = Executors.newSingleThreadExecutor(new ThreadFactory() {
+        final ThreadFactory defaultThreadFactory = Executors.defaultThreadFactory();
+        @Override public Thread newThread(Runnable r) {
+            Thread defaultThread = defaultThreadFactory.newThread(r);
+            defaultThread.setDaemon(true);
+            return defaultThread;
+        }
+    });
 
     /**
      * @param forClass is the {@link Class} for which to perform logging
@@ -72,7 +87,7 @@ public final class Loggers {
 
     /**
      * Constructs a {@link Meta} object from all non-null parameters augmenting the null parameters as necessary (i.e.,
-     * if an {@link Appender} configuration needs them).
+     * if an {@link net.ocheyedan.uncial.appender.Appender} configuration needs them).
      * @param loggingFor the {@link Class} for which to create the {@link Meta} object
      * @param canProvideMethodName the method name or null if not known
      * @param canProvideLineNumber the line number or null if not known
@@ -112,8 +127,21 @@ public final class Loggers {
         }
     }
 
-    static void distribute(LogEvent logEvent) {
-        // TODO - place in non-blocking queue
+    /**
+     * Distributes {@code logEvent} to all added {@link net.ocheyedan.uncial.appender.Appender} objects.
+     * Note, this distribution happens asynchronously by executing a {@link Runnable} on an {@link Executor}.
+     * @param logEvent to log
+     */
+    static void distribute(final LogEvent logEvent) {
+        logEventExecutor.execute(new Runnable() {
+            @Override public void run() {
+                Collection<UncialConfig.AppenderConfig> appenderConfigs = UncialConfig.get().getAppenderConfigs();
+                for (UncialConfig.AppenderConfig appenderConfig : appenderConfigs) {
+                    String message = appenderConfig.format(logEvent);
+                    appenderConfig.appender.handle(message);
+                }
+            }
+        });
     }
 
     /**

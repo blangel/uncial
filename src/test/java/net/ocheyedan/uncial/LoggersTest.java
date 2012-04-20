@@ -1,5 +1,6 @@
 package net.ocheyedan.uncial;
 
+import net.ocheyedan.uncial.appender.Appender;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -58,7 +59,7 @@ public class LoggersTest {
             @Override public String getName() {
                 return null;
             }
-            @Override public void handle(LogEvent logEvent) { }
+            @Override public void handle(String logEvent) { }
         }, "%L"); // one is sufficient
         meta = Loggers.meta(LoggersTest.class, null, null, null, Thread.currentThread().getName(), now);
         assertEquals(LoggersTest.class, meta.invokingClass());

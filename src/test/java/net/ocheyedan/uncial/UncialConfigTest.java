@@ -1,5 +1,6 @@
 package net.ocheyedan.uncial;
 
+import net.ocheyedan.uncial.appender.Appender;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -228,7 +229,7 @@ public class UncialConfigTest {
             @Override public String getName() {
                 return null;
             }
-            @Override public void handle(LogEvent logEvent) {
+            @Override public void handle(String logEvent) {
             }
         };
         UncialConfig uncialConfig = UncialConfig.get();
@@ -242,7 +243,7 @@ public class UncialConfigTest {
             @Override public String getName() {
                 return null;
             }
-            @Override public void handle(LogEvent logEvent) {
+            @Override public void handle(String logEvent) {
             }
         };
         uncialConfig.addAppender(mock1, "%F %m%n");
@@ -258,7 +259,7 @@ public class UncialConfigTest {
             @Override public String getName() {
                 return null;
             }
-            @Override public void handle(LogEvent logEvent) {
+            @Override public void handle(String logEvent) {
             }
         };
         UncialConfig uncialConfig = UncialConfig.get();
@@ -272,7 +273,7 @@ public class UncialConfigTest {
             @Override public String getName() {
                 return null;
             }
-            @Override public void handle(LogEvent logEvent) {
+            @Override public void handle(String logEvent) {
             }
         };
         uncialConfig.addAppender(mock1, "%L %m%n");
@@ -288,7 +289,7 @@ public class UncialConfigTest {
             @Override public String getName() {
                 return null;
             }
-            @Override public void handle(LogEvent logEvent) {
+            @Override public void handle(String logEvent) {
             }
         };
         UncialConfig uncialConfig = UncialConfig.get();
@@ -302,7 +303,7 @@ public class UncialConfigTest {
             @Override public String getName() {
                 return null;
             }
-            @Override public void handle(LogEvent logEvent) {
+            @Override public void handle(String logEvent) {
             }
         };
         uncialConfig.addAppender(mock1, "%M %m%n");

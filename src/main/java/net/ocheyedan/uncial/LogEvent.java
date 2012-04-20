@@ -7,7 +7,7 @@ import java.io.Serializable;
  * Date: 3/10/12
  * Time: 10:29 AM
  * 
- * A logging event to be passed through an {@link Appender} pipeline.
+ * A logging event to be passed through an {@link net.ocheyedan.uncial.appender.Appender} pipeline.
  */
 public final class LogEvent implements Serializable {
 

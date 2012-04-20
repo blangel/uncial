@@ -1,5 +1,7 @@
 package net.ocheyedan.uncial;
 
+import net.ocheyedan.uncial.appender.Appender;
+
 import java.util.Comparator;
 
 /**
@@ -16,7 +18,7 @@ import java.util.Comparator;
 public interface UncialConfigMBean {
 
     /**
-     * Adds {@code appender} to the set of {@link Appender} objects which will receive log messages.
+     * Adds {@code appender} to the set of {@link net.ocheyedan.uncial.appender.Appender} objects which will receive log messages.
      * The format is an interpreted string where the following tokens will be expanded according to the {@link Meta}
      * information provided with the log message:
      * <pre>
