@@ -25,14 +25,15 @@ This is basically the same pattern as LOG4J or SLF4J.
     LOG.trace("Your os is '%s' and you have %d CPUs.", System.getProperty("os.name"), Runtime.getRuntime().availableProcessors());
 
 #### Using the static `Log` Methods:
-Same methods as the `Logger` interface but accessed statically without sacrificing knowing the `Class` from which the log call originated (albeit at a slight performance penalty).
+Same methods as the `Logger` interface but accessed statically.  Note, this does not sacrifice knowing the `Class` from which the log call originated (albeit it does incur a slight performance penalty).
 
     Log.trace("Your os is '%s' and you have %d CPUs.", System.getProperty("os.name"), Runtime.getRuntime().availableProcessors());
 
 Configuration
 ---------------------
 
-Nope, no xml configuration available.  Configuration is done in java code or via __JMX__.  By default, no `Appenders` are configured so at minimum you'll need to configure an `Appender`. But don't worry it's __easy__!
+Nope, no xml configuration available.  Configuration is done in java code or via __JMX__.
+Note, by default, no `Appenders` are configured.  So at minimum you'll need to configure an `Appender`. But don't worry it's __easy__!
 Here are some examples:
 
 ##### Console appender (stdout)
