@@ -20,43 +20,31 @@ final class Uncial implements Logger {
     }
 
     @Override public void log(Meta meta, String level, String message, Object ... params) {
-        if (!Loggers.isEnabled(level, loggingFor)) {
-            return;
-        }
-        // this must be logged, so create formatted message now (as {@code params} may be mutable and modified by user
-        // after method return).
-        String formattedMessage = String.format(message, params);
-        // create serializable and place in log-queue
-        Loggers.distribute(new LogEvent(meta, level, formattedMessage));
+        _log(meta, System.currentTimeMillis(), level, message, params);
     }
 
     @Override public void log(String level, String message, Object ... params) {
-        long now = System.currentTimeMillis();
-        // check level before delegation to {@link #log(Meta, String, String, Object[]) as creation of Meta may be expensive
-        if (!Loggers.isEnabled(level, loggingFor)) {
-            return;
-        }
-        log(Loggers.meta(loggingFor, null, null, null, Thread.currentThread().getName(), now), level, message, params);
+        _log(null, System.currentTimeMillis(), level, message, params);
     }
 
     @Override public final void trace(String message, Object ... params) {
-        log(Logger.trace, message, params);
+        _log(null, System.currentTimeMillis(), Logger.trace, message, params);
     }
 
     @Override public final void debug(String message, Object ... params) {
-        log(Logger.debug, message, params);
+        _log(null, System.currentTimeMillis(), Logger.debug, message, params);
     }
 
     @Override public final void info(String message, Object ... params) {
-        log(Logger.info, message, params);
+        _log(null, System.currentTimeMillis(), Logger.info, message, params);
     }
 
     @Override public final void warn(String message, Object ... params) {
-        log(Logger.warn, message, params);
+        _log(null, System.currentTimeMillis(), Logger.warn, message, params);
     }
 
     @Override public final void error(String message, Object ... params) {
-        log(Logger.error, message, params);
+        _log(null, System.currentTimeMillis(), Logger.error, message, params);
     }
 
     @Override public final void error(Throwable t) {
@@ -67,7 +55,7 @@ final class Uncial implements Logger {
         }
         // cannot use the Throwable directly as it doesn't contain the method/line/etc from which the log call originated
         Meta meta = Loggers.meta(loggingFor, null, null, null, Thread.currentThread().getName(), now);
-        error(meta, t);
+        error(meta, t, now);
     }
 
     @Override public final void error(Throwable t, String message, Object ... params) {
@@ -78,15 +66,29 @@ final class Uncial implements Logger {
         }
         // cannot use the Throwable directly as it doesn't contain the method/line/etc from which the log call originated
         Meta meta = Loggers.meta(loggingFor, null, null, null, Thread.currentThread().getName(), now);
-        error(meta, t);
-        log(meta, Logger.error, message, params);
+        error(meta, t, now);
+        _log(meta, now, Logger.error, message, params);
     }
 
-    private void error(Meta meta, Throwable t) {
+    private void error(Meta meta, Throwable t, long when) {
         StringWriter stringWriter = new StringWriter();
         PrintWriter writer = new PrintWriter(stringWriter);
         t.printStackTrace(writer);
         String stackTrace = stringWriter.toString();
-        log(meta, Logger.error, stackTrace);
+        _log(meta, when, Logger.error, stackTrace);
+    }
+
+    private void _log(Meta meta, long when, String level, String message, Object ... params) {
+        if (!Loggers.isEnabled(level, loggingFor)) {
+            return;
+        }
+        if (meta == null) {
+            meta = Loggers.meta(loggingFor, null, null, null, Thread.currentThread().getName(), when);
+        }
+        // this must be logged, so create formatted message now (as {@code params} may be mutable and modified by user
+        // after method return).
+        String formattedMessage = String.format(message, params);
+        // create serializable and place in log-queue
+        Loggers.distribute(new LogEvent(meta, level, formattedMessage));
     }
 }

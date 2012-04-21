@@ -30,6 +30,8 @@ public final class UncialConfig implements UncialConfigMBean {
             }
         };
 
+        private static final ConcurrentMap<LogEvent, String> formattedCache = new ConcurrentHashMap<LogEvent, String>();
+
         /**
          * An appender implementation
          */
@@ -47,16 +49,76 @@ public final class UncialConfig implements UncialConfigMBean {
         }
 
         String format(LogEvent logEvent) {
-            String formatted = format.replaceAll("%t", logEvent.meta.invokingThreadName());
-            formatted = formatted.replaceAll("%F", logEvent.meta.invokingFileName());
-            formatted = formatted.replaceAll("%C", logEvent.meta.invokingClassName());
-            formatted = formatted.replaceAll("%M", logEvent.meta.invokingMethodName());
-            formatted = formatted.replaceAll("%L", String.valueOf(logEvent.meta.invokingLineNumber()));
-            formatted = formatted.replaceAll("%l", logEvent.level);
-            formatted = formatted.replaceAll("%d", dateFormatter.get().format(
-                    new Date(logEvent.meta.invokingEpochTime())));
-            formatted = formatted.replaceAll("%m", logEvent.message);
-            return formatted.replaceAll("%n", "\n");
+            if (formattedCache.containsKey(logEvent)) {
+                return formattedCache.get(logEvent);
+            }
+            StringBuilder buffer = new StringBuilder();
+            char[] chars = format.toCharArray();
+            boolean lastWasPercent = false;
+            for (char character : chars) {
+                if (lastWasPercent) {
+                    lastWasPercent = false;
+                    switch (character) {
+                        case 't':
+                            if (logEvent.meta.invokingThreadName() != null) {
+                                buffer.append(logEvent.meta.invokingThreadName());
+                            }
+                            break;
+                        case 'F':
+                            if (logEvent.meta.invokingFileName() != null) {
+                                buffer.append(logEvent.meta.invokingFileName());
+                            }
+                            break;
+                        case 'C':
+                            if (logEvent.meta.invokingClassName() != null) {
+                                buffer.append(logEvent.meta.invokingClassName());
+                            }
+                            break;
+                        case 'M':
+                            if (logEvent.meta.invokingMethodName() != null) {
+                                buffer.append(logEvent.meta.invokingMethodName());
+                            }
+                            break;
+                        case 'L':
+                            if (logEvent.meta.invokingLineNumber() != null) {
+                                buffer.append(logEvent.meta.invokingLineNumber());
+                            }
+                            break;
+                        case 'l':
+                            if (logEvent.level != null) {
+                                buffer.append(logEvent.level);
+                            }
+                            break;
+                        case 'd':
+                            buffer.append(dateFormatter.get().format(new Date(logEvent.meta.invokingEpochTime())));
+                            break;
+                        case 'm':
+                            if (logEvent.message != null) {
+                                buffer.append(logEvent.message);
+                            }
+                            break;
+                        case 'n':
+                            buffer.append('\n');
+                            break;
+                        case '%':
+                            buffer.append('%');
+                            lastWasPercent = true;
+                            break;
+                        default:
+                            buffer.append('%');
+                            buffer.append(character);
+                    }
+                } else {
+                    if (character == '%') {
+                        lastWasPercent = true;
+                    } else {
+                        buffer.append(character);
+                    }
+                }
+            }
+            String formatted = buffer.toString();
+            formattedCache.put(logEvent, formatted);
+            return formatted;
         }
     }
 
@@ -172,12 +234,15 @@ public final class UncialConfig implements UncialConfigMBean {
 
     private final AtomicReference<Comparator<String>> loggerComparator;
 
+    private final ConcurrentMap<String, Boolean> cacheIsEnabled;
+
     private UncialConfig() {
         this.appenderConfigs = new ConcurrentHashMap<String, AppenderConfig>(2, 1.0f);
         this.defaultLevel = new AtomicReference<String>(DEFAULT_LEVEL);
         this.loggerConfigs = new ConcurrentHashMap<String, LoggerConfig>(16, 1.0f);
         this.levelComparator = new AtomicReference<Comparator<String>>(DEFAULT_LEVEL_COMPARATOR);
         this.loggerComparator = new AtomicReference<Comparator<String>>(DEFAULT_LOGGER_COMPARATOR);
+        this.cacheIsEnabled = new ConcurrentHashMap<String, Boolean>(16, 1.0f);
     }
 
     /**
@@ -189,19 +254,30 @@ public final class UncialConfig implements UncialConfigMBean {
         if ((level == null) || (forClass == null)) {
             throw new NullPointerException("Level and Class must not be null.");
         }
-        // first iteration will simply look up the fully qualified class name directly.  subsequent iterations will
-        // look by 'pealing-away' the class name itself and packages from the fully qualified class name
-        String forClassName = forClass.getName();
-        int lastPackageSplitIndex = forClassName.length();
-        while (lastPackageSplitIndex != -1) {
-            forClassName = forClassName.substring(0, lastPackageSplitIndex);
-            LoggerConfig loggerConfig = loggerConfigs.get(forClassName);
-            if (loggerConfig != null) {
-                return (getLevelComparator().compare(loggerConfig.associatedLevel, level) <= 0);
-            }
-            lastPackageSplitIndex = forClassName.lastIndexOf(".");
+        String cacheKey = forClass.getName() + "@" + level;
+        Boolean cachedResult = cacheIsEnabled.get(cacheKey);
+        if (cachedResult != null) {
+            return cachedResult;
         }
-        return (getLevelComparator().compare(getDefaultLevel(), level) <= 0); // not specified; compare against default
+        if (!loggerConfigs.isEmpty()) {
+            // first iteration will simply look up the fully qualified class name directly.  subsequent iterations will
+            // look by 'pealing-away' the class name itself and packages from the fully qualified class name
+            String forClassName = forClass.getName();
+            int lastPackageSplitIndex = forClassName.length();
+            while (lastPackageSplitIndex != -1) {
+                forClassName = forClassName.substring(0, lastPackageSplitIndex);
+                LoggerConfig loggerConfig = loggerConfigs.get(forClassName);
+                if (loggerConfig != null) {
+                    cachedResult = (getLevelComparator().compare(loggerConfig.associatedLevel, level) <= 0);
+                    this.cacheIsEnabled.put(cacheKey, cachedResult);
+                    return cachedResult;
+                }
+                lastPackageSplitIndex = forClassName.lastIndexOf(".");
+            }
+        }
+        cachedResult = (getLevelComparator().compare(getDefaultLevel(), level) <= 0); // not specified; compare against default
+        this.cacheIsEnabled.put(cacheKey, cachedResult);
+        return cachedResult;
     }
 
     /**
@@ -321,6 +397,7 @@ public final class UncialConfig implements UncialConfigMBean {
         } else {
             this.loggerConfigs.put(forClass, new LoggerConfig(forClass, level));
         }
+        this.cacheIsEnabled.clear(); // TODO - can this be cleared at a more granular level?
     }
 
     /**

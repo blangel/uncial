@@ -8,9 +8,16 @@ package net.ocheyedan.uncial.appender;
  * An end point for formatted {@link String} messages within the {@literal Uncial} framework.
  */
 public interface Appender {
-    
+
+    /**
+     * @return a name for the appender
+     */
     String getName();
 
+    /**
+     * Handle the log {@code message}.  For instance, an appender might write the message to file.
+     * @param message to log
+     */
     void handle(String message);
     
 }

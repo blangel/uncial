@@ -112,14 +112,6 @@ public class UncialConfigTest {
     }
 
     @Test
-    public void defaultLoggerComparator() {
-        int result = UncialConfig.DEFAULT_LOGGER_COMPARATOR.compare("org.apache", "org.apache.commons.lang.StringUtils");
-        assertTrue(result < 0);
-
-        // TODO - needs to be more complicated as above is fine but need 'org.apache' to not include 'yyy.zzzz' / etc
-    }
-
-    @Test
     public void isEnabled() {
         UncialConfig uncialConfig = UncialConfig.get();
         // the default is info, check above and below

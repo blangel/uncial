@@ -142,7 +142,7 @@ public final class Loggers {
             @Override public void run() {
                 Collection<UncialConfig.AppenderConfig> appenderConfigs = UncialConfig.get().getAppenderConfigs();
                 for (UncialConfig.AppenderConfig appenderConfig : appenderConfigs) {
-                    String message = appenderConfig.format(logEvent);
+                    String message = appenderConfig.format(logEvent).intern();
                     appenderConfig.appender.handle(message);
                 }
             }
@@ -164,7 +164,8 @@ public final class Loggers {
         }
         for (int i = 1; i < stackTrace.length; i++) {
             StackTraceElement element = stackTrace[i];
-            if (!element.getClassName().startsWith("net.ocheyedan.uncial")) {
+            if (!element.getClassName().startsWith("net.ocheyedan.uncial")
+                    || element.getClassName().startsWith("net.ocheyedan.uncial.caliper")) { // TODO - keep this? essentially a hack for benchmark
                 return element;
             }
         }

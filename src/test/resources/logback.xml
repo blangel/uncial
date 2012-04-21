@@ -1,0 +1,14 @@
+<configuration>
+    <appender name="file" class="ch.qos.logback.core.FileAppender">
+        <file>/tmp/logback-benchmark.log</file>
+        <encoder>
+            <!-- equivalent uncial appender pattern for LogSystemsAppenderFormatBenchmark test -->
+            <!--<pattern>%d{MM/dd/yyyy HH:mm:ss.SSS} %thread %file %logger#%method @ %line [%level] - %msg%n</pattern>-->
+            <!-- equivalent default uncial appender pattern -->
+            <pattern>%d{MM/dd/yyyy HH:mm:ss.SSS} %logger [%level] - %msg%n</pattern>
+        </encoder>
+    </appender>
+    <root level="info">
+        <appender-ref ref="file"/>
+    </root>
+</configuration>
