@@ -2,8 +2,8 @@ package net.ocheyedan.uncial;
 
 import sun.reflect.Reflection;
 
-import java.util.Collection;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * User: blangel
@@ -20,6 +20,14 @@ public final class Loggers {
      * then the {@literal SLF4J} style {@literal {}} is used.
      */
     private static final Class<? extends Formatter> formatterClass;
+
+    /**
+     * Users can specify whether logging to the registered {@link net.ocheyedan.uncial.appender.Appender} objects happens
+     * on a separate thread (the default) or whether everything happens on the user's invoking thread.  User's specify
+     * single-threaded via the system property {@literal uncial.singleThreaded}.
+     */
+    private static final Distributor appenderExecutor;
+
     static {
         boolean useSlf4j = Boolean.getBoolean("uncial.slf4j");
         if (useSlf4j) {
@@ -27,18 +35,12 @@ public final class Loggers {
         } else {
             formatterClass = Formatter.Uncial.class;
         }
-    }
-
-    private static final Meta classProvider = getStaticMetaClassPartial();
-
-    private static final ExecutorService logEventExecutor = Executors.newSingleThreadExecutor(new ThreadFactory() {
-        final ThreadFactory defaultThreadFactory = Executors.defaultThreadFactory();
-        @Override public Thread newThread(Runnable r) {
-            Thread defaultThread = defaultThreadFactory.newThread(r);
-            defaultThread.setDaemon(true);
-            return defaultThread;
+        if (Boolean.getBoolean("uncial.singleThreaded")) {
+            appenderExecutor = new Distributor.InvokingThread();
+        } else {
+            appenderExecutor = new Distributor.SeparateThread();
         }
-    });
+    }
 
     private static final ConcurrentMap<Class<?>, Logger> loggers = new ConcurrentHashMap<Class<?>, Logger>();
 
@@ -53,14 +55,14 @@ public final class Loggers {
         UncialConfig.get().setLevelIfNotPresent(forClass.getName()); // setup the logger config
         // eliminate possibility of ever returning a different instance of the same logging class
         // constructing a logger for the same class is fine, but never return it.
-        loggers.putIfAbsent(forClass, new Uncial(forClass));
+        loggers.putIfAbsent(forClass, new Uncial(forClass, newFormatter(), appenderExecutor));
         return loggers.get(forClass);
     }
 
     /**
      * @return a new instance of the {@link Formatter} implementation.
      */
-    static Formatter newFormatter() {
+    private static Formatter newFormatter() {
         try {
             return formatterClass.newInstance();
         } catch (InstantiationException ie) {
@@ -159,25 +161,6 @@ public final class Loggers {
     }
 
     /**
-     * Distributes {@code logEvent} to all added {@link net.ocheyedan.uncial.appender.Appender} objects.
-     * Note, this distribution happens asynchronously by executing a {@link Runnable} on an {@link Executor}.
-     * @param meta information pertaining to the message to log
-     * @param level at which to log the message
-     * @param formattedMessage the pre-formatted message to log
-     */
-    static void distribute(final Meta meta, final String level, final String formattedMessage) {
-        logEventExecutor.execute(new Runnable() {
-            @Override public void run() {
-                Collection<UncialConfig.AppenderConfig> appenderConfigs = UncialConfig.get().getAppenderConfigs();
-                for (UncialConfig.AppenderConfig appenderConfig : appenderConfigs) {
-                    String message = appenderConfig.format(meta, level, formattedMessage);
-                    appenderConfig.appender.handle(message);
-                }
-            }
-        });
-    }
-
-    /**
      * Retrieves the first {@link StackTraceElement} from {@code stackTrace} which is not related to {@literal uncial}.
      * Assumes {@code stackTrace} has at least one element which can be skipped as that is the point at which
      * {@literal uncial} made the {@link Throwable} object from which {@code stackTrace} originates (said another way, the
@@ -205,20 +188,10 @@ public final class Loggers {
      * @return the invoking class, assuming two levels of uncial invocations before this method was invoked.
      */
     static Class<?> invokingLogClass() {
-        return classProvider.invokingClass();
-    }
-
-    private static Meta getStaticMetaClassPartial() {
-        return new MetaPartial() {
-            private static final long serialVersionUID = -7205263618048228542L;
-            @Override public Class<?> invokingClass() {
-                // one level to get to unical,
-                // one for invokingLogClass,
-                // one for invokingClass and
-                // another for Reflection.getCallerClass itself
-                return Reflection.getCallerClass(4);
-            }
-        };
+        // one level to get to unical,
+        // one for invokingLogClass,
+        // another for Reflection.getCallerClass itself
+        return Reflection.getCallerClass(3);
     }
 
     private Loggers() { }

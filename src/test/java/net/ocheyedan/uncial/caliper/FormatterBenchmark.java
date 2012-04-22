@@ -13,7 +13,7 @@ import java.util.Date;
  */
 public class FormatterBenchmark extends SimpleBenchmark {
 
-    private final Formatter formatter = new Formatter();
+    private final Formatter formatter = new Formatter.Uncial();
 
     public int timeFormatter_standard(int reps) {
         int value = 0;

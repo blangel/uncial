@@ -40,4 +40,12 @@ public class FileAppender implements Appender {
             System.err.println(ioe.getMessage());
         }
     }
+
+    @Override public void flush() {
+        try {
+            fileWriter.flush();
+        } catch (IOException ioe) {
+            System.err.println(ioe.getMessage());
+        }
+    }
 }

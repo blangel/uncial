@@ -7,9 +7,6 @@ import net.ocheyedan.uncial.Logger;
 import net.ocheyedan.uncial.Loggers;
 import net.ocheyedan.uncial.UncialConfig;
 import net.ocheyedan.uncial.appender.Appender;
-import net.ocheyedan.uncial.appender.PrintStreamAppender;
-import net.ocheyedan.uncial.caliper.uncial.NopAppender;
-import org.junit.Test;
 
 /**
  * User: blangel
@@ -18,13 +15,21 @@ import org.junit.Test;
  *
  * {@link com.google.caliper.Benchmark} for comparing {@literal Uncial} appender formats against each other.
  */
-public class UncialAppenderFormatBenchmark extends SimpleBenchmark {
+public class UncialWithExpensiveFormatBenchmark extends SimpleBenchmark {
 
-    private static final String STFormat = "%d %t %F %C#%M @ %L [%l] - %m%n";
+    private static final String ExpensiveFormat = "%d %t %F %C#%M @ %L [%l] - %m%n";
 
-    private final Appender appender = new NopAppender();
+    private final Appender appender = new Appender() {
+        @Override public String getName() {
+            return "no-op";
+        }
+        @Override public void handle(String message) {
+            // nothing
+        }
+        @Override public void flush() { }
+    };
 
-    private final Logger log = Loggers.get(UncialAppenderFormatBenchmark.class);
+    private final Logger log = Loggers.get(UncialWithExpensiveFormatBenchmark.class);
 
     public void timeLogger_info(int reps) {
         UncialConfig.get().addAppender(appender, UncialConfig.DEFAULT_APPENDER_FORMAT);
@@ -33,8 +38,8 @@ public class UncialAppenderFormatBenchmark extends SimpleBenchmark {
         }
     }
 
-    public void timeLogger_infoWithSTFormat(int reps) {
-        UncialConfig.get().addAppender(appender, STFormat);
+    public void timeLogger_infoWithExpensiveFormat(int reps) {
+        UncialConfig.get().addAppender(appender, ExpensiveFormat);
         for (int i = 0; i < reps; i++) {
             log.info("My message is %s", "Hello!");
         }
@@ -47,16 +52,15 @@ public class UncialAppenderFormatBenchmark extends SimpleBenchmark {
         }
     }
 
-    public void timeLog_infoWithSTFormat(int reps) {
-        UncialConfig.get().addAppender(appender, STFormat);
+    public void timeLog_infoWithWithExpensiveFormat(int reps) {
+        UncialConfig.get().addAppender(appender, ExpensiveFormat);
         for (int i = 0; i < reps; i++) {
             Log.info("My message is %s", "Hello!");
         }
     }
 
     public static void main(String[] args) throws Exception {
-        // run the benchmark
-        Runner.main(UncialAppenderFormatBenchmark.class, args);
+        Runner.main(UncialWithExpensiveFormatBenchmark.class, args);
     }
 
 }

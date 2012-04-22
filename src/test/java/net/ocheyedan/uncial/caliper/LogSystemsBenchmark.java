@@ -7,9 +7,6 @@ import net.ocheyedan.uncial.Loggers;
 import net.ocheyedan.uncial.UncialConfig;
 import net.ocheyedan.uncial.appender.Appender;
 import net.ocheyedan.uncial.appender.FileAppender;
-import net.ocheyedan.uncial.appender.PrintStreamAppender;
-import net.ocheyedan.uncial.caliper.uncial.NopAppender;
-import org.apache.log4j.xml.DOMConfigurator;
 import org.slf4j.LoggerFactory;
 
 /**

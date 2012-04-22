@@ -19,5 +19,10 @@ public interface Appender {
      * @param message to log
      */
     void handle(String message);
+
+    /**
+     * Allows implementations a hook into flushing their stream, if applicable, at JVM shutdown.
+     */
+    void flush();
     
 }

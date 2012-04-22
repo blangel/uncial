@@ -29,7 +29,7 @@ public class LoggersTest {
 
     @Test
     public void invokingLogClass() {
-        // simulate the four deep
+        // simulate the three deep call of users to uncial
         assertSame(LoggersTest.class, getInvokingLogClass());
     }
     private Class<?> getInvokingLogClass() {
@@ -60,6 +60,7 @@ public class LoggersTest {
                 return null;
             }
             @Override public void handle(String logEvent) { }
+            @Override public void flush() { }
         }, "%L"); // one is sufficient
         meta = Loggers.meta(LoggersTest.class, null, null, null, Thread.currentThread().getName(), now);
         assertEquals(LoggersTest.class, meta.invokingClass());

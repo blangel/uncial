@@ -7,15 +7,15 @@ import java.io.PrintStream;
  * Date: 4/19/12
  * Time: 9:40 PM
  */
-public class PrintStreamAppender implements Appender {
+public class ConsoleAppender implements Appender {
 
     private final PrintStream printStream;
 
-    public PrintStreamAppender() {
+    public ConsoleAppender() {
         this(System.out);
     }
 
-    public PrintStreamAppender(PrintStream printStream) {
+    public ConsoleAppender(PrintStream printStream) {
         this.printStream = printStream;
     }
 
@@ -25,5 +25,9 @@ public class PrintStreamAppender implements Appender {
 
     @Override public void handle(String message) {
         printStream.print(message);
+    }
+
+    @Override public void flush() {
+        printStream.flush();
     }
 }

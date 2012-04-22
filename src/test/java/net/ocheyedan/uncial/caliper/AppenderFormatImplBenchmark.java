@@ -3,10 +3,6 @@ package net.ocheyedan.uncial.caliper;
 import com.google.caliper.Runner;
 import com.google.caliper.SimpleBenchmark;
 import net.ocheyedan.uncial.*;
-import net.ocheyedan.uncial.appender.Appender;
-import net.ocheyedan.uncial.appender.FileAppender;
-import net.ocheyedan.uncial.caliper.uncial.NopAppender;
-import org.junit.Test;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

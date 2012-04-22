@@ -15,7 +15,7 @@ public interface Formatter {
     /**
      * Creates a thread-safe {@link StringBuilder} with the ability of resetting its value.
      */
-    static class Buffer extends ThreadLocal<StringBuilder> {
+    static final class Buffer extends ThreadLocal<StringBuilder> {
         @Override protected StringBuilder initialValue() {
             return new StringBuilder();
         }
@@ -27,7 +27,7 @@ public interface Formatter {
     /**
      * Mimics {@literal SLF4J}'s parameters formatter implementation but expands it with varargs support.
      */
-    static class Slf4j implements Formatter {
+    static final class Slf4j implements Formatter {
 
         private final Buffer buffer = new Buffer();
 
@@ -70,7 +70,7 @@ public interface Formatter {
      * Wrapper around {@link String#format(String, Object...)} which shares, in  a thread-safe way, both a {@link java.util.Formatter}
      * and {@link StringBuilder} object.
      */
-    static class Uncial implements Formatter {
+    static final class Uncial implements Formatter {
 
         private final Buffer buffer = new Buffer();
 

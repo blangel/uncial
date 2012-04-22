@@ -6,8 +6,8 @@ import net.ocheyedan.uncial.Log;
 import net.ocheyedan.uncial.Logger;
 import net.ocheyedan.uncial.Loggers;
 import net.ocheyedan.uncial.UncialConfig;
-import net.ocheyedan.uncial.appender.PrintStreamAppender;
-import net.ocheyedan.uncial.caliper.uncial.NopAppender;
+import net.ocheyedan.uncial.appender.Appender;
+import net.ocheyedan.uncial.appender.ConsoleAppender;
 
 /**
  * User: blangel
@@ -21,7 +21,15 @@ public class UncialBenchmark extends SimpleBenchmark {
 
     static {
         // set a console appender
-        UncialConfig.get().addAppender(new NopAppender());
+        UncialConfig.get().addAppender(new Appender() {
+            @Override public String getName() {
+                return "no-op";
+            }
+            @Override public void handle(String message) {
+                // nothing
+            }
+            @Override public void flush() { }
+        });
     }
 
     private final Logger log = Loggers.get(UncialBenchmark.class);
@@ -70,48 +78,6 @@ public class UncialBenchmark extends SimpleBenchmark {
         }
     }
 
-    public void timeLogger_traceWithParams(int reps) {
-        for (int i = 0; i < reps; i++) {
-            log.trace("My message is %s and at %d", "Hello!", System.currentTimeMillis());
-        }
-    }
-
-    public void timeLogger_debugWithParams(int reps) {
-        for (int i = 0; i < reps; i++) {
-            log.debug("My message is %s and at %d", "Hello!", System.currentTimeMillis());
-        }
-    }
-
-    public void timeLogger_infoWithParams(int reps) {
-        for (int i = 0; i < reps; i++) {
-            log.info("My message is %s and at %d", "Hello!", System.currentTimeMillis());
-        }
-    }
-
-    public void timeLogger_warnWithParams(int reps) {
-        for (int i = 0; i < reps; i++) {
-            log.warn("My message is %s and at %d", "Hello!", System.currentTimeMillis());
-        }
-    }
-
-    public void timeLogger_errorWithParams(int reps) {
-        for (int i = 0; i < reps; i++) {
-            log.error("My message is %s and at %d", "Hello!", System.currentTimeMillis());
-        }
-    }
-
-//    public void timeLogger_errorWithExceptionAndParams(int reps) {
-//        for (int i = 0; i < reps; i++) {
-//            log.error(exception, "My message is %s and at %d", "Hello!", System.currentTimeMillis());
-//        }
-//    }
-
-    public void timeLogger_userWithParams(int reps) {
-        for (int i = 0; i < reps; i++) {
-            log.log("my level", "My message is %s and at %d", "Hello!", System.currentTimeMillis());
-        }
-    }
-
     public void timeLog_trace(int reps) {
         for (int i = 0; i < reps; i++) {
             Log.trace("My message");
@@ -154,50 +120,7 @@ public class UncialBenchmark extends SimpleBenchmark {
         }
     }
 
-    public void timeLog_traceWithParams(int reps) {
-        for (int i = 0; i < reps; i++) {
-            Log.trace("My message is %s and at %d", "Hello!", System.currentTimeMillis());
-        }
-    }
-
-    public void timeLog_debugWithParams(int reps) {
-        for (int i = 0; i < reps; i++) {
-            Log.debug("My message is %s and at %d", "Hello!", System.currentTimeMillis());
-        }
-    }
-
-    public void timeLog_infoWithParams(int reps) {
-        for (int i = 0; i < reps; i++) {
-            Log.info("My message is %s and at %d", "Hello!", System.currentTimeMillis());
-        }
-    }
-
-    public void timeLog_warnWithParams(int reps) {
-        for (int i = 0; i < reps; i++) {
-            Log.warn("My message is %s and at %d", "Hello!", System.currentTimeMillis());
-        }
-    }
-
-    public void timeLog_errorWithParams(int reps) {
-        for (int i = 0; i < reps; i++) {
-            Log.error("My message is %s and at %d", "Hello!", System.currentTimeMillis());
-        }
-    }
-
-//    public void timeLog_errorWithExceptionAndParams(int reps) {
-//        for (int i = 0; i < reps; i++) {
-//            Log.error(exception, "My message is %s and at %d", "Hello!", System.currentTimeMillis());
-//        }
-//    }
-
-    public void timeLog_userWithParams(int reps) {
-        for (int i = 0; i < reps; i++) {
-            Log.log("my level", "My message is %s and at %d", "Hello!", System.currentTimeMillis());
-        }
-    }
-
     public static void main(String[] args) throws Exception {
-        // run the benchmark
         Runner.main(UncialBenchmark.class, args);
     }
 
