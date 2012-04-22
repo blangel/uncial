@@ -2,12 +2,11 @@ package net.ocheyedan.uncial;
 
 import net.ocheyedan.uncial.appender.Appender;
 
-import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -24,13 +23,7 @@ public final class UncialConfig implements UncialConfigMBean {
      */
     static final class AppenderConfig {
 
-        private static final ThreadLocal<SimpleDateFormat> dateFormatter = new ThreadLocal<SimpleDateFormat>() {
-            @Override protected SimpleDateFormat initialValue() {
-                return new SimpleDateFormat("MM/dd/yyyy HH:mm:ss.SSS");
-            }
-        };
-
-        private static final ConcurrentMap<LogEvent, String> formattedCache = new ConcurrentHashMap<LogEvent, String>();
+        private static final Formatter.Appender formatter = new Formatter.Appender();
 
         /**
          * An appender implementation
@@ -48,77 +41,11 @@ public final class UncialConfig implements UncialConfigMBean {
             this.format = format;
         }
 
-        String format(LogEvent logEvent) {
-            if (formattedCache.containsKey(logEvent)) {
-                return formattedCache.get(logEvent);
+        String format(final Meta meta, final String level, final String formattedMessage) {
+            if ((meta == null) || (level == null) || (formattedMessage == null)) {
+                throw new NullPointerException("The meta/level/message all cannot be null.");
             }
-            StringBuilder buffer = new StringBuilder();
-            char[] chars = format.toCharArray();
-            boolean lastWasPercent = false;
-            for (char character : chars) {
-                if (lastWasPercent) {
-                    lastWasPercent = false;
-                    switch (character) {
-                        case 't':
-                            if (logEvent.meta.invokingThreadName() != null) {
-                                buffer.append(logEvent.meta.invokingThreadName());
-                            }
-                            break;
-                        case 'F':
-                            if (logEvent.meta.invokingFileName() != null) {
-                                buffer.append(logEvent.meta.invokingFileName());
-                            }
-                            break;
-                        case 'C':
-                            if (logEvent.meta.invokingClassName() != null) {
-                                buffer.append(logEvent.meta.invokingClassName());
-                            }
-                            break;
-                        case 'M':
-                            if (logEvent.meta.invokingMethodName() != null) {
-                                buffer.append(logEvent.meta.invokingMethodName());
-                            }
-                            break;
-                        case 'L':
-                            if (logEvent.meta.invokingLineNumber() != null) {
-                                buffer.append(logEvent.meta.invokingLineNumber());
-                            }
-                            break;
-                        case 'l':
-                            if (logEvent.level != null) {
-                                buffer.append(logEvent.level);
-                            }
-                            break;
-                        case 'd':
-                            buffer.append(dateFormatter.get().format(new Date(logEvent.meta.invokingEpochTime())));
-                            break;
-                        case 'm':
-                            if (logEvent.message != null) {
-                                buffer.append(logEvent.message);
-                            }
-                            break;
-                        case 'n':
-                            buffer.append('\n');
-                            break;
-                        case '%':
-                            buffer.append('%');
-                            lastWasPercent = true;
-                            break;
-                        default:
-                            buffer.append('%');
-                            buffer.append(character);
-                    }
-                } else {
-                    if (character == '%') {
-                        lastWasPercent = true;
-                    } else {
-                        buffer.append(character);
-                    }
-                }
-            }
-            String formatted = buffer.toString();
-            formattedCache.put(logEvent, formatted);
-            return formatted;
+            return formatter.format(meta, level, formattedMessage, format);
         }
     }
 
@@ -140,9 +67,36 @@ public final class UncialConfig implements UncialConfigMBean {
          */
         private final String associatedLevel;
 
+        /**
+         * The logger's parent, if any.  A logger has a parent if there is another logger whose {@link #className} is
+         * the base of the logger's own {@link #className}.
+         */
+        private final AtomicReference<LoggerConfig> parent;
+
+        private final ConcurrentMap<String, Boolean> isEnabledCache;
+
         private LoggerConfig(String className, String associatedLevel) {
             this.className = className;
             this.associatedLevel = associatedLevel;
+            this.parent = new AtomicReference<LoggerConfig>();
+            this.isEnabledCache = new ConcurrentHashMap<String, Boolean>(5, 1.0f);
+        }
+
+        boolean isEnabled(String level) {
+            if (isEnabledCache.containsKey(level)) {
+                return isEnabledCache.get(level);
+            }
+            boolean isEnabled;
+            if (associatedLevel != null) {
+                isEnabled = (UncialConfig.get().getLevelComparator().compare(associatedLevel, level) <= 0);
+            } else if (parent.get() != null) {
+                isEnabled = parent.get().isEnabled(level);
+            } else {
+                UncialConfig config = UncialConfig.get();
+                isEnabled = (config.getLevelComparator().compare(config.getDefaultLevel(), level) <= 0);
+            }
+            isEnabledCache.put(level, isEnabled);
+            return isEnabled;
         }
     }
 
@@ -234,7 +188,11 @@ public final class UncialConfig implements UncialConfigMBean {
 
     private final AtomicReference<Comparator<String>> loggerComparator;
 
-    private final ConcurrentMap<String, Boolean> cacheIsEnabled;
+    private final AtomicBoolean needsMethod = new AtomicBoolean(false);
+
+    private final AtomicBoolean needsLine = new AtomicBoolean(false);
+
+    private final AtomicBoolean needsFile = new AtomicBoolean(false);
 
     private UncialConfig() {
         this.appenderConfigs = new ConcurrentHashMap<String, AppenderConfig>(2, 1.0f);
@@ -242,7 +200,6 @@ public final class UncialConfig implements UncialConfigMBean {
         this.loggerConfigs = new ConcurrentHashMap<String, LoggerConfig>(16, 1.0f);
         this.levelComparator = new AtomicReference<Comparator<String>>(DEFAULT_LEVEL_COMPARATOR);
         this.loggerComparator = new AtomicReference<Comparator<String>>(DEFAULT_LOGGER_COMPARATOR);
-        this.cacheIsEnabled = new ConcurrentHashMap<String, Boolean>(16, 1.0f);
     }
 
     /**
@@ -254,30 +211,8 @@ public final class UncialConfig implements UncialConfigMBean {
         if ((level == null) || (forClass == null)) {
             throw new NullPointerException("Level and Class must not be null.");
         }
-        String cacheKey = forClass.getName() + "@" + level;
-        Boolean cachedResult = cacheIsEnabled.get(cacheKey);
-        if (cachedResult != null) {
-            return cachedResult;
-        }
-        if (!loggerConfigs.isEmpty()) {
-            // first iteration will simply look up the fully qualified class name directly.  subsequent iterations will
-            // look by 'pealing-away' the class name itself and packages from the fully qualified class name
-            String forClassName = forClass.getName();
-            int lastPackageSplitIndex = forClassName.length();
-            while (lastPackageSplitIndex != -1) {
-                forClassName = forClassName.substring(0, lastPackageSplitIndex);
-                LoggerConfig loggerConfig = loggerConfigs.get(forClassName);
-                if (loggerConfig != null) {
-                    cachedResult = (getLevelComparator().compare(loggerConfig.associatedLevel, level) <= 0);
-                    this.cacheIsEnabled.put(cacheKey, cachedResult);
-                    return cachedResult;
-                }
-                lastPackageSplitIndex = forClassName.lastIndexOf(".");
-            }
-        }
-        cachedResult = (getLevelComparator().compare(getDefaultLevel(), level) <= 0); // not specified; compare against default
-        this.cacheIsEnabled.put(cacheKey, cachedResult);
-        return cachedResult;
+        LoggerConfig loggerConfig = loggerConfigs.get(forClass.getName());
+        return loggerConfig.isEnabled(level);
     }
 
     /**
@@ -285,7 +220,7 @@ public final class UncialConfig implements UncialConfigMBean {
      * @return true if when logging {@code whenLogging} the method name is needed for any appender configuration
      */
     boolean needsMethodName(Class<?> whenLogging) {
-        return needs("%M", whenLogging);
+        return needsMethod.get();
     }
 
     /**
@@ -293,7 +228,7 @@ public final class UncialConfig implements UncialConfigMBean {
      * @return true if when logging {@code whenLogging} the line number is needed for any appender configuration
      */
     boolean needsLineNumber(Class<?> whenLogging) {
-        return needs("%L", whenLogging);
+        return needsLine.get();
     }
 
     /**
@@ -301,22 +236,7 @@ public final class UncialConfig implements UncialConfigMBean {
      * @return true if when logging {@code whenLogging} the file name is needed for any appender configuration
      */
     boolean needsFileName(Class<?> whenLogging) {
-        return needs("%F", whenLogging);
-    }
-
-    /**
-     * @param format for which to check (the valid formats are those specified in the {@link #addAppender(Appender, String)},
-     *               i.e., {@literal %M}.
-     * @param whenLogging NOT CURRENTLY USED
-     * @return true if when logging {@code whenLogging} the specified {@code format} is needed for any appender configuration
-     */
-    private boolean needs(String format, Class<?> whenLogging) {
-        for (AppenderConfig config : this.appenderConfigs.values()) {
-            if (config.format.contains(format)) {
-                return true;
-            }
-        }
-        return false;
+        return needsFile.get();
     }
 
     /**
@@ -350,13 +270,28 @@ public final class UncialConfig implements UncialConfigMBean {
      * @param format for which to print log messages.
      */
     @Override
-    public void addAppender(Appender appender, String format) {
+    public synchronized void addAppender(Appender appender, String format) {
         if (appender == null) {
             return;
         }
         String appenderFormat = (format == null ? DEFAULT_APPENDER_FORMAT : format);
         String appenderKey = appender.getClass().getName(); // no guarantee Appender#getName() will be unique
-        this.appenderConfigs.put(appenderKey, new AppenderConfig(appender, appenderFormat));
+        AppenderConfig old = this.appenderConfigs.put(appenderKey, new AppenderConfig(appender, appenderFormat));
+        if (appenderFormat.contains("%M")) {
+            needsMethod.set(true);
+        } else if ((old != null) && old.format.contains("%M")) {
+            needsMethod.set(false);
+        }
+        if (appenderFormat.contains("%L")) {
+            needsLine.set(true);
+        } else if ((old != null) && old.format.contains("%L")) {
+            needsLine.set(false);
+        }
+        if (appenderFormat.contains("%F")) {
+            needsFile.set(true);
+        } else if ((old != null) && old.format.contains("%F")) {
+            needsFile.set(false);
+        }
     }
 
     /**
@@ -388,16 +323,56 @@ public final class UncialConfig implements UncialConfigMBean {
      * @param level for which to log for classes matching {@code forClass}
      */
     @Override
-    public void setLevel(String forClass, String level) {
+    public synchronized void setLevel(String forClass, String level) {
         if (forClass == null) {
             return;
         }
-        if (level == null) {
-            this.loggerConfigs.remove(forClass);
-        } else {
-            this.loggerConfigs.put(forClass, new LoggerConfig(forClass, level));
+        LoggerConfig loggerConfig = new LoggerConfig(forClass, level);
+        LoggerConfig old = this.loggerConfigs.put(forClass, loggerConfig);
+        adjustParent(loggerConfig, old);
+        adjustChildren(loggerConfig);
+    }
+
+    private void adjustParent(LoggerConfig loggerConfig, LoggerConfig old) {
+        // if there was LoggerConfig, replacing it doesn't change the parent, so use it
+        if (old != null) {
+            loggerConfig.parent.set(old.parent.get());
+            return;
         }
-        this.cacheIsEnabled.clear(); // TODO - can this be cleared at a more granular level?
+        LoggerConfig parent = null;
+        for (LoggerConfig possibleParent : loggerConfigs.values()) {
+            if ((possibleParent != loggerConfig) && loggerConfig.className.startsWith(possibleParent.className)) {
+                // potential match; only use if longer than any existing match
+                if ((parent == null) || (possibleParent.className.length() >= parent.className.length())) {
+                    parent = possibleParent;
+                }
+            }
+        }
+        loggerConfig.parent.set(parent);
+    }
+
+    private void adjustChildren(LoggerConfig loggerConfig) {
+        for (LoggerConfig possibleChild : loggerConfigs.values()) {
+            if ((possibleChild != loggerConfig) && possibleChild.className.startsWith(loggerConfig.className)) {
+                // potential child, only use if loggerConfig is more of a match than any existing parent
+                if ((possibleChild.parent.get() == null)
+                        || (loggerConfig.className.length() >= possibleChild.parent.get().className.length())) {
+                    possibleChild.parent.set(loggerConfig);
+                    possibleChild.isEnabledCache.clear();
+                }
+            }
+        }
+    }
+
+    /**
+     * Called whenever a logger is created.  Pre-setting the config allows for fast 'isEnabled' lookup.
+     * @param forClass the class name of the logger created.
+     */
+    void setLevelIfNotPresent(String forClass) {
+        if ((forClass == null) || this.loggerConfigs.containsKey(forClass)) {
+            return;
+        }
+        setLevel(forClass, null);
     }
 
     /**
@@ -406,11 +381,15 @@ public final class UncialConfig implements UncialConfigMBean {
      * @param level to be the default log level.
      */
     @Override
-    public void setDefaultLevel(String level) {
+    public synchronized void setDefaultLevel(String level) {
         if ((level == null) || level.isEmpty()) {
             return;
         }
         this.defaultLevel.set(level);
+        // invalidate isEnabled caches
+        for (LoggerConfig loggerConfig : loggerConfigs.values()) {
+            loggerConfig.isEnabledCache.clear();
+        }
     }
 
     /**

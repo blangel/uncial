@@ -13,8 +13,23 @@ import java.util.concurrent.*;
  * A utility class which provides convenience methods regarding creation of {@link Logger} objects.
  */
 public final class Loggers {
-    
-    static final Meta classProvider = getStaticMetaClassPartial();
+
+    /**
+     * Users can specify how to handle formatted/parameterized messages.  The default is to use {@literal printf}
+     * style (i.e., {@link String#format(String, Object...)}) but if the user the specifies system property {@literal uncial.slf4j}
+     * then the {@literal SLF4J} style {@literal {}} is used.
+     */
+    private static final Class<? extends Formatter> formatterClass;
+    static {
+        boolean useSlf4j = Boolean.getBoolean("uncial.slf4j");
+        if (useSlf4j) {
+            formatterClass = Formatter.Slf4j.class;
+        } else {
+            formatterClass = Formatter.Uncial.class;
+        }
+    }
+
+    private static final Meta classProvider = getStaticMetaClassPartial();
 
     private static final ExecutorService logEventExecutor = Executors.newSingleThreadExecutor(new ThreadFactory() {
         final ThreadFactory defaultThreadFactory = Executors.defaultThreadFactory();
@@ -35,10 +50,24 @@ public final class Loggers {
         if (loggers.containsKey(forClass)) {
             return loggers.get(forClass);
         }
+        UncialConfig.get().setLevelIfNotPresent(forClass.getName()); // setup the logger config
         // eliminate possibility of ever returning a different instance of the same logging class
         // constructing a logger for the same class is fine, but never return it.
         loggers.putIfAbsent(forClass, new Uncial(forClass));
         return loggers.get(forClass);
+    }
+
+    /**
+     * @return a new instance of the {@link Formatter} implementation.
+     */
+    static Formatter newFormatter() {
+        try {
+            return formatterClass.newInstance();
+        } catch (InstantiationException ie) {
+            throw new AssertionError(ie.getMessage());
+        } catch (IllegalAccessException iae) {
+            throw new AssertionError(iae.getMessage());
+        }
     }
 
     /**
@@ -106,16 +135,13 @@ public final class Loggers {
         if (loggingFor == null) {
             throw new NullPointerException("Must provide for which class is being logged.");
         }
+        // the information which is non-trivial in terms of time to retrieve is methodName/lineNumber/fileName
+        String threadName = (canProvideThreadName == null ? Thread.currentThread().getName() : canProvideThreadName);
         // if nothing is null, return without consulting configuration as the configuration is inconsequential
         if ((canProvideMethodName != null) && (canProvideLineNumber != null) &&
                 (canProvideFileName != null) && (canProvideThreadName != null)) {
             return new MetaComplete(loggingFor, canProvideMethodName, canProvideLineNumber, canProvideFileName,
                                     canProvideThreadName, epochTime);
-        }
-        // the information which is non-trivial in terms of time to retrieve is methodName/lineNumber/fileName
-        String threadName = (canProvideThreadName == null ? Thread.currentThread().getName() : canProvideThreadName);
-        if ((canProvideMethodName != null) && (canProvideLineNumber != null) && (canProvideFileName != null)) {
-            return new MetaComplete(loggingFor, canProvideMethodName, canProvideLineNumber, canProvideFileName, threadName, epochTime);
         }
         // so, don't have either the methodName/lineNumber/fileName but do we even need them?
         UncialConfig uncialConfig = UncialConfig.get();
@@ -135,14 +161,16 @@ public final class Loggers {
     /**
      * Distributes {@code logEvent} to all added {@link net.ocheyedan.uncial.appender.Appender} objects.
      * Note, this distribution happens asynchronously by executing a {@link Runnable} on an {@link Executor}.
-     * @param logEvent to log
+     * @param meta information pertaining to the message to log
+     * @param level at which to log the message
+     * @param formattedMessage the pre-formatted message to log
      */
-    static void distribute(final LogEvent logEvent) {
+    static void distribute(final Meta meta, final String level, final String formattedMessage) {
         logEventExecutor.execute(new Runnable() {
             @Override public void run() {
                 Collection<UncialConfig.AppenderConfig> appenderConfigs = UncialConfig.get().getAppenderConfigs();
                 for (UncialConfig.AppenderConfig appenderConfig : appenderConfigs) {
-                    String message = appenderConfig.format(logEvent).intern();
+                    String message = appenderConfig.format(meta, level, formattedMessage);
                     appenderConfig.appender.handle(message);
                 }
             }
@@ -159,10 +187,10 @@ public final class Loggers {
      * @throws AssertionError if there is no such {@link StackTraceElement} to return
      */
     private static StackTraceElement getCaller(StackTraceElement[] stackTrace) {
-        if ((stackTrace == null) || (stackTrace.length < 2)) {
+        if ((stackTrace == null) || (stackTrace.length < 3)) {
             throw new AssertionError("Given a null StrackTraceElement[] or not originating from the Uncial system.");
         }
-        for (int i = 1; i < stackTrace.length; i++) {
+        for (int i = 2; i < stackTrace.length; i++) {
             StackTraceElement element = stackTrace[i];
             if (!element.getClassName().startsWith("net.ocheyedan.uncial")
                     || element.getClassName().startsWith("net.ocheyedan.uncial.caliper")) { // TODO - keep this? essentially a hack for benchmark

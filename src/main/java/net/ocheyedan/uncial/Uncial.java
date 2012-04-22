@@ -12,39 +12,42 @@ import java.io.StringWriter;
  * The desire is to be simple and fast not "full featured."
  */
 final class Uncial implements Logger {
-    
+
     private final Class<?> loggingFor;
-    
+
+    private final Formatter formatter;
+
     Uncial(Class<?> loggingFor) {
         this.loggingFor = loggingFor;
+        this.formatter = Loggers.newFormatter();
     }
 
     @Override public void log(Meta meta, String level, String message, Object ... params) {
-        _log(meta, System.currentTimeMillis(), level, message, params);
+        _log(loggingFor, formatter, meta, System.currentTimeMillis(), level, message, params);
     }
 
     @Override public void log(String level, String message, Object ... params) {
-        _log(null, System.currentTimeMillis(), level, message, params);
+        _log(loggingFor, formatter, null, System.currentTimeMillis(), level, message, params);
     }
 
     @Override public final void trace(String message, Object ... params) {
-        _log(null, System.currentTimeMillis(), Logger.trace, message, params);
+        _log(loggingFor, formatter, null, System.currentTimeMillis(), Logger.trace, message, params);
     }
 
     @Override public final void debug(String message, Object ... params) {
-        _log(null, System.currentTimeMillis(), Logger.debug, message, params);
+        _log(loggingFor, formatter, null, System.currentTimeMillis(), Logger.debug, message, params);
     }
 
     @Override public final void info(String message, Object ... params) {
-        _log(null, System.currentTimeMillis(), Logger.info, message, params);
+        _log(loggingFor, formatter, null, System.currentTimeMillis(), Logger.info, message, params);
     }
 
     @Override public final void warn(String message, Object ... params) {
-        _log(null, System.currentTimeMillis(), Logger.warn, message, params);
+        _log(loggingFor, formatter, null, System.currentTimeMillis(), Logger.warn, message, params);
     }
 
     @Override public final void error(String message, Object ... params) {
-        _log(null, System.currentTimeMillis(), Logger.error, message, params);
+        _log(loggingFor, formatter, null, System.currentTimeMillis(), Logger.error, message, params);
     }
 
     @Override public final void error(Throwable t) {
@@ -67,7 +70,7 @@ final class Uncial implements Logger {
         // cannot use the Throwable directly as it doesn't contain the method/line/etc from which the log call originated
         Meta meta = Loggers.meta(loggingFor, null, null, null, Thread.currentThread().getName(), now);
         error(meta, t, now);
-        _log(meta, now, Logger.error, message, params);
+        _log(loggingFor, formatter, meta, now, Logger.error, message, params);
     }
 
     private void error(Meta meta, Throwable t, long when) {
@@ -75,10 +78,10 @@ final class Uncial implements Logger {
         PrintWriter writer = new PrintWriter(stringWriter);
         t.printStackTrace(writer);
         String stackTrace = stringWriter.toString();
-        _log(meta, when, Logger.error, stackTrace);
+        _log(loggingFor, formatter, meta, when, Logger.error, stackTrace);
     }
 
-    private void _log(Meta meta, long when, String level, String message, Object ... params) {
+    private static void _log(Class<?> loggingFor, net.ocheyedan.uncial.Formatter formatter, Meta meta, long when, String level, String message, Object ... params) {
         if (!Loggers.isEnabled(level, loggingFor)) {
             return;
         }
@@ -87,8 +90,8 @@ final class Uncial implements Logger {
         }
         // this must be logged, so create formatted message now (as {@code params} may be mutable and modified by user
         // after method return).
-        String formattedMessage = String.format(message, params);
+        String formattedMessage = formatter.format(message, params);
         // create serializable and place in log-queue
-        Loggers.distribute(new LogEvent(meta, level, formattedMessage));
+        Loggers.distribute(meta, level, formattedMessage);
     }
 }

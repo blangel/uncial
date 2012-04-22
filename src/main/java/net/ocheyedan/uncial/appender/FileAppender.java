@@ -36,7 +36,6 @@ public class FileAppender implements Appender {
     @Override public void handle(String message) {
         try {
             fileWriter.write(message);
-            fileWriter.flush();
         } catch (IOException ioe) {
             System.err.println(ioe.getMessage());
         }

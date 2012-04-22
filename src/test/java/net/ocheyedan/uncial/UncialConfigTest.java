@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import java.lang.reflect.Field;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
@@ -29,6 +30,15 @@ public class UncialConfigTest {
         Field loggerConfigsField = UncialConfig.class.getDeclaredField("loggerConfigs");
         loggerConfigsField.setAccessible(true);
         ((ConcurrentMap) loggerConfigsField.get(config)).clear();
+        Field needsMethodField = UncialConfig.class.getDeclaredField("needsMethod");
+        needsMethodField.setAccessible(true);
+        ((AtomicBoolean) needsMethodField.get(config)).set(false);
+        Field needsLineField = UncialConfig.class.getDeclaredField("needsLine");
+        needsLineField.setAccessible(true);
+        ((AtomicBoolean) needsLineField.get(config)).set(false);
+        Field needsFileField = UncialConfig.class.getDeclaredField("needsFile");
+        needsFileField.setAccessible(true);
+        ((AtomicBoolean) needsFileField.get(config)).set(false);
     }
 
     @Test
@@ -114,6 +124,9 @@ public class UncialConfigTest {
     @Test
     public void isEnabled() {
         UncialConfig uncialConfig = UncialConfig.get();
+        Loggers.get(UncialConfigTest.class);
+        Loggers.get(UncialConfig.class);
+        Loggers.get(NestedClass.class);
         // the default is info, check above and below
         assertFalse(uncialConfig.isEnabled(Logger.trace, UncialConfigTest.class));
         assertFalse(uncialConfig.isEnabled(Logger.debug, UncialConfigTest.class));
@@ -185,12 +198,12 @@ public class UncialConfigTest {
         assertTrue(uncialConfig.isEnabled("user type", UncialConfigTest.class));
         assertTrue(uncialConfig.isEnabled("z different user type", UncialConfigTest.class)); // user-types by default are compared via String.compareTo
 
-        // test that NestedClass isn't interfered with by setting to its container
+        // test that NestedClass is modified as setting its container means the container becomes its parent
         assertFalse(uncialConfig.isEnabled(Logger.trace, NestedClass.class));
         assertFalse(uncialConfig.isEnabled(Logger.debug, NestedClass.class));
         assertFalse(uncialConfig.isEnabled(Logger.info, NestedClass.class));
-        assertTrue(uncialConfig.isEnabled(Logger.warn, NestedClass.class));
-        assertTrue(uncialConfig.isEnabled(Logger.error, NestedClass.class));
+        assertFalse(uncialConfig.isEnabled(Logger.warn, NestedClass.class));
+        assertFalse(uncialConfig.isEnabled(Logger.error, NestedClass.class));
         assertTrue(uncialConfig.isEnabled("user type", NestedClass.class));
         // set the NestedClass explicitly and ensure its setting doesn't interfere with its container or its related package's level
         uncialConfig.setLevel(NestedClass.class.getName(), Logger.debug);

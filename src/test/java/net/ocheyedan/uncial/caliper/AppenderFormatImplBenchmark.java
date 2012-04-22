@@ -20,7 +20,7 @@ public class AppenderFormatImplBenchmark extends SimpleBenchmark {
 
     private static final String appenderFormat = "%d %t %F %C#%M @ %L [%l] - %m%n";
 
-    private static final LogEvent logEvent = new LogEvent(new Meta() {
+    private static final Meta meta = new Meta() {
         private static final long serialVersionUID = 2374571977173759630L;
         @Override public Class<?> invokingClass() {
             return AppenderFormatImplBenchmark.class;
@@ -46,7 +46,9 @@ public class AppenderFormatImplBenchmark extends SimpleBenchmark {
         @Override public long invokingEpochTime() {
             return System.currentTimeMillis();
         }
-    }, Logger.info, "Hello there!");
+    };
+    private static final String level = Logger.info;
+    private static final String message = "Hello there!";
 
     private static final ThreadLocal<SimpleDateFormat> dateFormatter = new ThreadLocal<SimpleDateFormat>() {
         @Override protected SimpleDateFormat initialValue() {
@@ -57,15 +59,15 @@ public class AppenderFormatImplBenchmark extends SimpleBenchmark {
     public int timeLogger_regex(int reps) {
         int value = 0;
         for (int i = 0; i < reps; i++) {
-            String formatted = appenderFormat.replaceAll("%t", logEvent.meta.invokingThreadName());
-            formatted = formatted.replaceAll("%F", logEvent.meta.invokingFileName());
-            formatted = formatted.replaceAll("%C", logEvent.meta.invokingClassName());
-            formatted = formatted.replaceAll("%M", logEvent.meta.invokingMethodName());
-            formatted = formatted.replaceAll("%L", String.valueOf(logEvent.meta.invokingLineNumber()));
-            formatted = formatted.replaceAll("%l", logEvent.level);
+            String formatted = appenderFormat.replaceAll("%t", meta.invokingThreadName());
+            formatted = formatted.replaceAll("%F", meta.invokingFileName());
+            formatted = formatted.replaceAll("%C", meta.invokingClassName());
+            formatted = formatted.replaceAll("%M", meta.invokingMethodName());
+            formatted = formatted.replaceAll("%L", String.valueOf(meta.invokingLineNumber()));
+            formatted = formatted.replaceAll("%l", level);
             formatted = formatted.replaceAll("%d", dateFormatter.get().format(
-                    new Date(logEvent.meta.invokingEpochTime())));
-            formatted = formatted.replaceAll("%m", logEvent.message);
+                    new Date(meta.invokingEpochTime())));
+            formatted = formatted.replaceAll("%m", message);
             value += formatted.replaceAll("%n", "\n").hashCode();
         }
         return value;
@@ -82,28 +84,28 @@ public class AppenderFormatImplBenchmark extends SimpleBenchmark {
                     lastWasPercent = false;
                     switch (character) {
                         case 't':
-                            buffer.append(logEvent.meta.invokingThreadName());
+                            buffer.append(meta.invokingThreadName());
                             break;
                         case 'F':
-                            buffer.append(logEvent.meta.invokingFileName());
+                            buffer.append(meta.invokingFileName());
                             break;
                         case 'C':
-                            buffer.append(logEvent.meta.invokingClassName());
+                            buffer.append(meta.invokingClassName());
                             break;
                         case 'M':
-                            buffer.append(logEvent.meta.invokingMethodName());
+                            buffer.append(meta.invokingMethodName());
                             break;
                         case 'L':
-                            buffer.append(logEvent.meta.invokingLineNumber());
+                            buffer.append(meta.invokingLineNumber());
                             break;
                         case 'l':
-                            buffer.append(logEvent.level);
+                            buffer.append(level);
                             break;
                         case 'd':
-                            buffer.append(dateFormatter.get().format(new Date(logEvent.meta.invokingEpochTime())));
+                            buffer.append(dateFormatter.get().format(new Date(meta.invokingEpochTime())));
                             break;
                         case 'm':
-                            buffer.append(logEvent.message);
+                            buffer.append(message);
                             break;
                         case 'n':
                             buffer.append('\n');
@@ -132,15 +134,15 @@ public class AppenderFormatImplBenchmark extends SimpleBenchmark {
     public int timeLogger_regexWithNullCheck(int reps) {
         int value = 0;
         for (int i = 0; i < reps; i++) {
-            String formatted = (logEvent.meta.invokingThreadName() == null ? appenderFormat : appenderFormat.replaceAll("%t", logEvent.meta.invokingThreadName()));
-            formatted = (logEvent.meta.invokingFileName() == null ? formatted : formatted.replaceAll("%F", logEvent.meta.invokingFileName()));
-            formatted = (logEvent.meta.invokingClassName() == null ? formatted : formatted.replaceAll("%C", logEvent.meta.invokingClassName()));
-            formatted = (logEvent.meta.invokingMethodName() == null ? formatted : formatted.replaceAll("%M", logEvent.meta.invokingMethodName()));
-            formatted = (logEvent.meta.invokingLineNumber() == null ? formatted : formatted.replaceAll("%L", String.valueOf(logEvent.meta.invokingLineNumber())));
-            formatted = (logEvent.level == null ? formatted : formatted.replaceAll("%l", logEvent.level));
+            String formatted = (meta.invokingThreadName() == null ? appenderFormat : appenderFormat.replaceAll("%t", meta.invokingThreadName()));
+            formatted = (meta.invokingFileName() == null ? formatted : formatted.replaceAll("%F", meta.invokingFileName()));
+            formatted = (meta.invokingClassName() == null ? formatted : formatted.replaceAll("%C", meta.invokingClassName()));
+            formatted = (meta.invokingMethodName() == null ? formatted : formatted.replaceAll("%M", meta.invokingMethodName()));
+            formatted = (meta.invokingLineNumber() == null ? formatted : formatted.replaceAll("%L", String.valueOf(meta.invokingLineNumber())));
+            formatted = (level == null ? formatted : formatted.replaceAll("%l", level));
             formatted = formatted.replaceAll("%d", dateFormatter.get().format(
-                    new Date(logEvent.meta.invokingEpochTime())));
-            formatted = (logEvent.message == null ? formatted : formatted.replaceAll("%m", logEvent.message));
+                    new Date(meta.invokingEpochTime())));
+            formatted = (message == null ? formatted : formatted.replaceAll("%m", message));
             value += formatted.replaceAll("%n", "\n").hashCode();
         }
         return value;
@@ -157,41 +159,41 @@ public class AppenderFormatImplBenchmark extends SimpleBenchmark {
                     lastWasPercent = false;
                     switch (character) {
                         case 't':
-                            if (logEvent.meta.invokingThreadName() != null) {
-                                buffer.append(logEvent.meta.invokingThreadName());
+                            if (meta.invokingThreadName() != null) {
+                                buffer.append(meta.invokingThreadName());
                             }
                             break;
                         case 'F':
-                            if (logEvent.meta.invokingFileName() != null) {
-                                buffer.append(logEvent.meta.invokingFileName());
+                            if (meta.invokingFileName() != null) {
+                                buffer.append(meta.invokingFileName());
                             }
                             break;
                         case 'C':
-                            if (logEvent.meta.invokingClassName() != null) {
-                                buffer.append(logEvent.meta.invokingClassName());
+                            if (meta.invokingClassName() != null) {
+                                buffer.append(meta.invokingClassName());
                             }
                             break;
                         case 'M':
-                            if (logEvent.meta.invokingMethodName() != null) {
-                                buffer.append(logEvent.meta.invokingMethodName());
+                            if (meta.invokingMethodName() != null) {
+                                buffer.append(meta.invokingMethodName());
                             }
                             break;
                         case 'L':
-                            if (logEvent.meta.invokingLineNumber() != null) {
-                                buffer.append(logEvent.meta.invokingLineNumber());
+                            if (meta.invokingLineNumber() != null) {
+                                buffer.append(meta.invokingLineNumber());
                             }
                             break;
                         case 'l':
-                            if (logEvent.level != null) {
-                                buffer.append(logEvent.level);
+                            if (level != null) {
+                                buffer.append(level);
                             }
                             break;
                         case 'd':
-                            buffer.append(dateFormatter.get().format(new Date(logEvent.meta.invokingEpochTime())));
+                            buffer.append(dateFormatter.get().format(new Date(meta.invokingEpochTime())));
                             break;
                         case 'm':
-                            if (logEvent.message != null) {
-                                buffer.append(logEvent.message);
+                            if (message != null) {
+                                buffer.append(message);
                             }
                             break;
                         case 'n':
