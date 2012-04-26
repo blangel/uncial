@@ -118,7 +118,7 @@ This test uses a log thread and has SLF4J-style formatting for Uncial.  Logback 
 Full results with more trials [here](http://microbenchmarks.appspot.com/run/uncial.benchmark@gmail.com/net.ocheyedan.uncial.caliper.LogSystemsThreadedSlf4jBenchmark).
 
 ###### Note about the SLF4J Benchmarks
-The above numbers make it appear that the SLF4J formatting for Uncial is much slower when it fact it handles multiple arguments better than the _printf_ style formatter (which is why it is included in Uncial).  Take a look at the caliper results as they include many more tests and detail worth noting.
+The above numbers make it appear that the SLF4J formatting for Uncial is much slower when it fact it handles multiple arguments better than the _printf_ style formatter (which is why it is included in Uncial).  Take a look at the caliper results as they include many more tests and details worth noting.
 
 ##### LogSystemsWithExpensiveFormatBenchmark
 This test uses the default Uncial configuration in terms of log-thread and formatting style however it changes the appender formatter for all implementations to utilize the expensive options of logging method name, line number and file name of the invoking log call.  Benchmark was run using the equivalent __FileAppender__ for each implementation and using the equivalent appender format of `%d{MM/dd/yyyy HH:mm:ss.SSS} %t %F %C#%M @ %L [%c] - %m%n`
