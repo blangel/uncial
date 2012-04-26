@@ -72,12 +72,18 @@ In general Uncial is about __2x__ faster than Logback and __14x__ faster than Lo
 ##### LogSystemsBenchmark
 This test uses a log thread with _printf_-style formatting (default uncial configuration) for Uncial.  Logback and Log4j are not (cannot) using a log thread.  Benchmark was run using the equivalent __FileAppender__ for each implementation and using the equivalent appender format of `%d{MM/dd/yyyy HH:mm:ss.SSS} %C [%c] - %m%n`
 
-* __Uncial__ 
-    * __2.74__ _us_
-* __Logback__
-    * __5.57__ _us_
-* __Log4j__
-    * __44.13__ _us_
+<table>
+  <tr><th>Benchmark</th><th>Logger</th><th>Time (us)</th><th>Linear Runtime</th><th>%</th></tr>
+  <tr><td>Message (0 params)</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td></td><td>Uncial</td><td>2.74</td><td>=</td><td>100%</td></tr>
+  <tr><td></td><td>Logback</td><td>5.57</td><td>===</td><td>203%</td></tr> <tr><td></td><td>Log4j</td><td>44.13</td><td>=============================</td><td>1,612%</td></tr>
+  <tr><td>Message (1 params)</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td></td><td>Uncial</td><td>3.14</td><td>==</td><td>115%</td></tr>
+  <tr><td></td><td>Logback</td><td>6.32</td><td>====</td><td>231%</td></tr> <tr><td></td><td>Log4j</td><td>44.46</td><td>=============================</td><td>1,625%</td></tr>
+  <tr><td>Message (many params)</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td></td><td>Uncial</td><td>6.40</td><td>====</td><td>234%</td></tr>
+  <tr><td></td><td>Logback</td><td>7.01</td><td>====</td><td>256%</td></tr> <tr><td></td><td>Log4j</td><td>44.52</td><td>==============================</td><td>1,627%</td></tr>
+</table>
 
 Full results for this test with more trials [here](http://microbenchmarks.appspot.com/run/uncial.benchmark@gmail.com/net.ocheyedan.uncial.caliper.LogSystemsBenchmark). 
 
