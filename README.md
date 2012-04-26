@@ -85,58 +85,82 @@ This test uses a log thread with _printf_-style formatting (default uncial confi
   <tr><td></td><td>Logback</td><td>7.01</td><td>====</td><td>256%</td></tr> <tr><td></td><td>Log4j</td><td>44.52</td><td>==============================</td><td>1,627%</td></tr>
 </table>
 
-Full results for this test with more trials [here](http://microbenchmarks.appspot.com/run/uncial.benchmark@gmail.com/net.ocheyedan.uncial.caliper.LogSystemsBenchmark). 
+See [here](http://microbenchmarks.appspot.com/run/uncial.benchmark@gmail.com/net.ocheyedan.uncial.caliper.LogSystemsBenchmark) for full results of this test with more trials.
 
 ##### LogSystemsSingleThreadedBenchmark
 This test does not use a log thread and has _printf_-style formatting for Uncial.  Benchmark was run using the equivalent __FileAppender__ for each implementation and using the equivalent appender format of `%d{MM/dd/yyyy HH:mm:ss.SSS} %C [%c] - %m%n`
 
-* __Uncial__ 
-    * __2.94__ _us_
-* __Logback__
-    * __5.74__ _us_
-* __Log4j__
-    * __44.45__ _us_
+<table>
+  <tr><th>Benchmark</th><th>Logger</th><th>Time (us)</th><th>Linear Runtime</th><th>%</th></tr>
+  <tr><td>Message (0 params)</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td></td><td>Uncial</td><td>2.94</td><td>=</td><td>100%</td></tr>
+  <tr><td></td><td>Logback</td><td>5.74</td><td>===</td><td>196%</td></tr> <tr><td></td><td>Log4j</td><td>45.45</td><td>=============================</td><td>1,548%</td></tr>
+  <tr><td>Message (1 params)</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td></td><td>Uncial</td><td>3.25</td><td>==</td><td>111%</td></tr>
+  <tr><td></td><td>Logback</td><td>6.27</td><td>====</td><td>214%</td></tr> <tr><td></td><td>Log4j</td><td>44.95</td><td>=============================</td><td>1,531%</td></tr>
+  <tr><td>Message (many params)</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td></td><td>Uncial</td><td>6.61</td><td>====</td><td>225%</td></tr>
+  <tr><td></td><td>Logback</td><td>7.15</td><td>====</td><td>244%</td></tr> <tr><td></td><td>Log4j</td><td>44.45</td><td>=============================</td><td>1,548%</td></tr>
+</table>
 
-Full results for this test with more trials [here](http://microbenchmarks.appspot.com/run/uncial.benchmark@gmail.com/net.ocheyedan.uncial.caliper.LogSystemsSingleThreadedBenchmark).
+See [here](http://microbenchmarks.appspot.com/run/uncial.benchmark@gmail.com/net.ocheyedan.uncial.caliper.LogSystemsSingleThreadedBenchmark) for full results of this test with more trials.
 
 ##### LogSystemsSingleThreadedSlf4jBenchmark
 This test does not use a log thread and has SLF4J-style formatting for Uncial.  Benchmark was run using the equivalent __FileAppender__ for each implementation and using the equivalent appender format of `%d{MM/dd/yyyy HH:mm:ss.SSS} %C [%c] - %m%n`
 
-* __Uncial__ 
-    * __3.27__ _us_
-* __Logback__
-    * __5.67__ _us_
-* __Log4j__
-    * __44.14__ _us_
+<table>
+  <tr><th>Benchmark</th><th>Logger</th><th>Time (us)</th><th>Linear Runtime</th><th>%</th></tr>
+  <tr><td>Message (0 params)</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td></td><td>Uncial</td><td>3.27</td><td>==</td><td>100%</td></tr>
+  <tr><td></td><td>Logback</td><td>5.64</td><td>===</td><td>174%</td></tr> <tr><td></td><td>Log4j</td><td>45.14</td><td>=============================</td><td>1,382%</td></tr>
+  <tr><td>Message (1 params)</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td></td><td>Uncial</td><td>3.94</td><td>==</td><td>121%</td></tr>
+  <tr><td></td><td>Logback</td><td>6.52</td><td>====</td><td>200%</td></tr> <tr><td></td><td>Log4j</td><td>45.39</td><td>==============================</td><td>1,390%</td></tr>
+  <tr><td>Message (many params)</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td></td><td>Uncial</td><td>3.22</td><td>==</td><td>99%</td></tr>
+  <tr><td></td><td>Logback</td><td>7.11</td><td>====</td><td>220%</td></tr> <tr><td></td><td>Log4j</td><td>45.16</td><td>=============================</td><td>1,383%</td></tr>
+</table>
 
-Full results for this test with more trials [here](http://microbenchmarks.appspot.com/run/uncial.benchmark@gmail.com/net.ocheyedan.uncial.caliper.LogSystemsThreadedSlf4jBenchmark).
+See [here](http://microbenchmarks.appspot.com/run/uncial.benchmark@gmail.com/net.ocheyedan.uncial.caliper.LogSystemsThreadedSlf4jBenchmark) for full results of this test with more trials.
 
 ##### LogSystemsThreadedSlf4jBenchmark
 This test uses a log thread and has SLF4J-style formatting for Uncial.  Logback and Log4j are not (cannot) using a log thread.  Benchmark was run using the equivalent __FileAppender__ for each implementation and using the equivalent appender format of `%d{MM/dd/yyyy HH:mm:ss.SSS} %C [%c] - %m%n`
 
-* __Uncial__ 
-    * __3.12__ _us_
-* __Logback__
-    * __5.59__ _us_
-* __Log4j__
-    * __45.12__ _us_
+<table>
+  <tr><th>Benchmark</th><th>Logger</th><th>Time (us)</th><th>Linear Runtime</th><th>%</th></tr>
+  <tr><td>Message (0 params)</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td></td><td>Uncial</td><td>3.12</td><td>==</td><td>100%</td></tr>
+  <tr><td></td><td>Logback</td><td>5.59</td><td>===</td><td>179%</td></tr> <tr><td></td><td>Log4j</td><td>45.12</td><td>============================</td><td>1,446%</td></tr>
+  <tr><td>Message (1 params)</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td></td><td>Uncial</td><td>3.32</td><td>==</td><td>107%</td></tr>
+  <tr><td></td><td>Logback</td><td>6.43</td><td>====</td><td>206%</td></tr> <tr><td></td><td>Log4j</td><td>45.49</td><td>==============================</td><td>1,458%</td></tr>
+  <tr><td>Message (many params)</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td></td><td>Uncial</td><td>3.24</td><td>==</td><td>104%</td></tr>
+  <tr><td></td><td>Logback</td><td>7.49</td><td>====</td><td>240%</td></tr> <tr><td></td><td>Log4j</td><td>45.41</td><td>=============================</td><td>1,456%</td></tr>
+</table>
 
-Full results for this test with more trials [here](http://microbenchmarks.appspot.com/run/uncial.benchmark@gmail.com/net.ocheyedan.uncial.caliper.LogSystemsThreadedSlf4jBenchmark).
+See [here](http://microbenchmarks.appspot.com/run/uncial.benchmark@gmail.com/net.ocheyedan.uncial.caliper.LogSystemsThreadedSlf4jBenchmark) for full results of this test with more trials.
 
 ###### Note about the SLF4J Benchmarks
-The above numbers make it appear that the SLF4J formatting for Uncial is much slower when it fact it handles multiple arguments better than the _printf_ style formatter (which is why it is included in Uncial).  Take a look at the caliper results as they include many more tests and details worth noting.
+The SLF4J formatting for Uncial is slower with no arguments but much better than the _printf_ style formatter when handling many arguments (which is why it is included in Uncial).  Take a look at the caliper results as they include many more tests and details worth noting.
 
 ##### LogSystemsWithExpensiveFormatBenchmark
 This test uses the default Uncial configuration in terms of log-thread and formatting style however it changes the appender formatter for all implementations to utilize the expensive options of logging method name, line number and file name of the invoking log call.  Benchmark was run using the equivalent __FileAppender__ for each implementation and using the equivalent appender format of `%d{MM/dd/yyyy HH:mm:ss.SSS} %t %F %C#%M @ %L [%c] - %m%n`
 
-* __Uncial__ 
-    * __25.4__ _us_
-* __Logback__
-    * __53.6__ _us_
-* __Log4j__
-    * __44.1__ _us_
-
-Full results for this test with more trials [here](http://microbenchmarks.appspot.com/run/uncial.benchmark@gmail.com/net.ocheyedan.uncial.caliper.LogSystemsWithExpensiveFormatBenchmark). 
+<table>
+  <tr><th>Benchmark</th><th>Logger</th><th>Time (us)</th><th>Linear Runtime</th><th>%</th></tr>
+  <tr><td>Message (0 params)</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td></td><td>Uncial</td><td>25.4</td><td>=============</td><td>100%</td></tr>
+  <tr><td></td><td>Logback</td><td>53.6</td><td>=============================</td><td>210%</td></tr> <tr><td></td><td>Log4j</td><td>44.1</td><td>========================</td><td>173%</td></tr>
+  <tr><td>Message (1 params)</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td></td><td>Uncial</td><td>27.8</td><td>===============</td><td>109%</td></tr>
+  <tr><td></td><td>Logback</td><td>54.1</td><td>=============================</td><td>213%</td></tr> <tr><td></td><td>Log4j</td><td>45.3</td><td>========================</td><td>178%</td></tr>
+  <tr><td>Message (many params)</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td></td><td>Uncial</td><td>31.4</td><td>=================</td><td>123%</td></tr>
+  <tr><td></td><td>Logback</td><td>54.9</td><td>==============================</td><td>216%</td></tr> <tr><td></td><td>Log4j</td><td>45.3</td><td>========================</td><td>178%</td></tr>
+</table>
+ 
+See [here](http://microbenchmarks.appspot.com/run/uncial.benchmark@gmail.com/net.ocheyedan.uncial.caliper.LogSystemsWithExpensiveFormatBenchmark) for full results of this test with more trials. 
 
 
 SLF4J Support
