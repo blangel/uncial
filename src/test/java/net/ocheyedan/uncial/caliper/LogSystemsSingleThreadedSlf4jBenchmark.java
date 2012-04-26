@@ -92,6 +92,6 @@ public class LogSystemsSingleThreadedSlf4jBenchmark extends SimpleBenchmark {
     }
 
     public static void main(String[] args) throws Exception {
-        Runner.main(LogSystemsBenchmark.class, args);
+        Runner.main(LogSystemsSingleThreadedSlf4jBenchmark.class, args);
     }
 }
