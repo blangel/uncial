@@ -8,7 +8,7 @@ import java.util.Date;
  * Date: 4/21/12
  * Time: 9:28 PM
  *
- * A reusable and thread-safe {@link java.util.Formatter}.
+ * An interface for {@literal printf} formatting.
  */
 public interface Formatter {
 
@@ -67,10 +67,10 @@ public interface Formatter {
     }
 
     /**
-     * Wrapper around {@link String#format(String, Object...)} which shares, in  a thread-safe way, both a {@link java.util.Formatter}
+     * Wrapper around {@link String#format(String, Object...)} which shares, in a thread-safe way, both a {@link java.util.Formatter}
      * and {@link StringBuilder} object.
      */
-    static final class Uncial implements Formatter {
+    static final class Printf implements Formatter {
 
         private final Buffer buffer = new Buffer();
 
@@ -89,7 +89,7 @@ public interface Formatter {
 
     /**
      * A {@link Formatter} like implementation which {@link Appender} objects can use to format their message according
-     * to the {@link Uncial} appender format.
+     * to the {@link net.ocheyedan.uncial.Formatter.Printf} appender format.
      */
     static class Appender {
 
@@ -169,7 +169,7 @@ public interface Formatter {
     }
 
     /**
-     * @param format including placeholders (i.e., {@literal %s} in {@link Uncial} implementation and {@literal {}}
+     * @param format including placeholders (i.e., {@literal %s} in {@link net.ocheyedan.uncial.Formatter.Printf} implementation and {@literal {}}
      *               in {@link Slf4j} implementation.
      * @param args the arguments to replace into the {@code format}
      * @return a formatted string

@@ -16,15 +16,15 @@ public final class Loggers {
 
     /**
      * Users can specify how to handle formatted/parameterized messages.  The default is to use {@literal printf}
-     * style (i.e., {@link String#format(String, Object...)}) but if the user the specifies system property {@literal uncial.slf4j}
-     * then the {@literal SLF4J} style {@literal {}} is used.
+     * style (i.e., {@link String#format(String, Object...)}) but the user can specify {@literal SLF4J} style {@literal {}}
+     * formatting by specifying system property {@literal uncial.slf4j}.
      */
     private static final Class<? extends Formatter> formatterClass;
 
     /**
      * Users can specify whether logging to the registered {@link net.ocheyedan.uncial.appender.Appender} objects happens
-     * on a separate thread (the default) or whether everything happens on the user's invoking thread.  User's specify
-     * single-threaded via the system property {@literal uncial.singleThreaded}.
+     * on a separate thread (the default) or whether logging happens on the user's invoking thread.  User's specify
+     * single-threaded behavior via the system property {@literal uncial.singleThreaded}.
      */
     private static final Distributor appenderExecutor;
 
@@ -33,7 +33,7 @@ public final class Loggers {
         if (useSlf4j) {
             formatterClass = Formatter.Slf4j.class;
         } else {
-            formatterClass = Formatter.Uncial.class;
+            formatterClass = Formatter.Printf.class;
         }
         if (Boolean.getBoolean("uncial.singleThreaded")) {
             appenderExecutor = new Distributor.InvokingThread();
@@ -142,7 +142,7 @@ public final class Loggers {
         // if nothing is null, return without consulting configuration as the configuration is inconsequential
         if ((canProvideMethodName != null) && (canProvideLineNumber != null) &&
                 (canProvideFileName != null) && (canProvideThreadName != null)) {
-            return new MetaComplete(loggingFor, canProvideMethodName, canProvideLineNumber, canProvideFileName,
+            return new Meta.Default(loggingFor, canProvideMethodName, canProvideLineNumber, canProvideFileName,
                                     canProvideThreadName, epochTime);
         }
         // so, don't have either the methodName/lineNumber/fileName but do we even need them?
@@ -152,11 +152,11 @@ public final class Loggers {
                             || uncialConfig.needsFileName(loggingFor));
         if (need) {
             StackTraceElement stackTraceElement = getCaller(new Exception().getStackTrace());
-            return new MetaComplete(loggingFor, stackTraceElement.getMethodName(), stackTraceElement.getLineNumber(),
+            return new Meta.Default(loggingFor, stackTraceElement.getMethodName(), stackTraceElement.getLineNumber(),
                                     stackTraceElement.getFileName(), threadName, epochTime);
         } else {
             // expensive things to compute are not even needed...
-            return new MetaComplete(loggingFor, canProvideMethodName, canProvideLineNumber, canProvideFileName, threadName, epochTime);
+            return new Meta.Default(loggingFor, canProvideMethodName, canProvideLineNumber, canProvideFileName, threadName, epochTime);
         }
     }
 

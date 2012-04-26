@@ -4,8 +4,6 @@ import com.google.caliper.Runner;
 import com.google.caliper.SimpleBenchmark;
 import net.ocheyedan.uncial.Formatter;
 
-import java.util.Date;
-
 /**
  * User: blangel
  * Date: 4/21/12
@@ -13,7 +11,7 @@ import java.util.Date;
  */
 public class FormatterBenchmark extends SimpleBenchmark {
 
-    private final Formatter formatter = new Formatter.Uncial();
+    private final Formatter formatter = new Formatter.Printf();
 
     public int timeFormatter_standard(int reps) {
         int value = 0;

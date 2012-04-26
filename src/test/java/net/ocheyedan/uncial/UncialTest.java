@@ -45,6 +45,7 @@ public class UncialTest {
             Thread.yield();
             Thread.sleep(500); // give some time to logging thread to do its work
             stdout.flush();
+            oldStdout.append(new String(stream.toByteArray()));
             assertEquals(47 * 2, stream.size());
 
             FileAppender fileAppender = new FileAppender("/tmp/uncial-test.log");

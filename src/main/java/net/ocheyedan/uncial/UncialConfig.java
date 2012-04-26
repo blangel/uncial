@@ -211,6 +211,7 @@ public final class UncialConfig implements UncialConfigMBean {
         if ((level == null) || (forClass == null)) {
             throw new NullPointerException("Level and Class must not be null.");
         }
+        setLevelIfNotPresent(forClass.getName());
         LoggerConfig loggerConfig = loggerConfigs.get(forClass.getName());
         return loggerConfig.isEnabled(level);
     }
