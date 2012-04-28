@@ -6,6 +6,9 @@ import java.io.*;
  * User: blangel
  * Date: 4/19/12
  * Time: 9:42 PM
+ *
+ * A simple file based {@link Appender}.  The log file is never rolled.  See {@link RollingFileAppender} is such behavior
+ * is needed.
  */
 public class FileAppender implements Appender {
 
@@ -24,7 +27,7 @@ public class FileAppender implements Appender {
             this.file.createNewFile();
             fileWriter = new BufferedWriter(new FileWriter(file, true));
         } catch (IOException ioe) {
-            throw new IllegalStateException(
+            throw new IllegalArgumentException(
                     String.format("Could not create log-file %s [ at path %s ].", file.getName(), file.getAbsolutePath()), ioe);
         }
     }
@@ -41,9 +44,9 @@ public class FileAppender implements Appender {
         }
     }
 
-    @Override public void flush() {
+    @Override public void close() {
         try {
-            fileWriter.flush();
+            fileWriter.close();
         } catch (IOException ioe) {
             System.err.println(ioe.getMessage());
         }

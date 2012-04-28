@@ -54,7 +54,7 @@ public class UncialTest {
             Thread.yield();
             Thread.sleep(500); // give some time to logging thread to do its work
             stdout.flush();
-            fileAppender.flush();
+            fileAppender.close();
             assertEquals((47 * 2) + (48 * 2), stream.size());
             FileReader reader = new FileReader("/tmp/uncial-test.log");
             BufferedReader bufferedReader = new BufferedReader(reader);

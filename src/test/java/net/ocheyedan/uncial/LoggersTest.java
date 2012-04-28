@@ -60,7 +60,7 @@ public class LoggersTest {
                 return null;
             }
             @Override public void handle(String logEvent) { }
-            @Override public void flush() { }
+            @Override public void close() { }
         }, "%L"); // one is sufficient
         meta = Loggers.meta(LoggersTest.class, null, null, null, Thread.currentThread().getName(), now);
         assertEquals(LoggersTest.class, meta.invokingClass());

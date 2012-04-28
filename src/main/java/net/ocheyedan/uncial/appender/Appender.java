@@ -23,6 +23,6 @@ public interface Appender {
     /**
      * Allows implementations a hook into flushing their stream, if applicable, at JVM shutdown.
      */
-    void flush();
+    void close();
     
 }

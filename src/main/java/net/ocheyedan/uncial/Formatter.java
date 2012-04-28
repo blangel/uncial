@@ -22,6 +22,9 @@ public interface Formatter {
         public void clear() {
             get().setLength(0);
         }
+        @Override public String toString() {
+            return get().toString();
+        }
     }
 
     /**

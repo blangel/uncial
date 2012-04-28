@@ -66,7 +66,7 @@ interface Distributor {
                 @Override public void run() {
                     Collection<UncialConfig.AppenderConfig> appenderConfigs = UncialConfig.get().getAppenderConfigs();
                     for (UncialConfig.AppenderConfig appenderConfig : appenderConfigs) {
-                        appenderConfig.appender.flush();
+                        appenderConfig.appender.close();
                     }
                 }
             });
