@@ -7,7 +7,7 @@ package net.ocheyedan.uncial;
  * 
  * The definition of a logger within the {@literal Uncial} framework.
  */
-public interface Logger {
+public interface Logger extends org.slf4j.Logger {
 
     /**
      * The {@literal trace} log level; used by method {@link #trace(String, Object[])}
@@ -62,6 +62,7 @@ public interface Logger {
      * @param params @see {@link #log(String, String, Object...)}
      * @see #log(String, String, Object...)
      */
+    @SuppressWarnings("overrides") // doesn't seem to suppress, need to give javac "-Xlint:-overrides" (in ply, -Pcompiler.warnings=-overrides)
     void trace(String message, Object ... params);
 
     /**
@@ -70,6 +71,7 @@ public interface Logger {
      * @param params @see {@link #log(String, String, Object...)}
      * @see #log(String, String, Object...)
      */
+    @SuppressWarnings("overrides") // doesn't seem to suppress, need to give javac "-Xlint:-overrides" (in ply, -Pcompiler.warnings=-overrides)
     void debug(String message, Object ... params);
 
     /**
@@ -78,6 +80,7 @@ public interface Logger {
      * @param params @see {@link #log(String, String, Object...)}
      * @see #log(String, String, Object...)
      */
+    @SuppressWarnings("overrides") // doesn't seem to suppress, need to give javac "-Xlint:-overrides" (in ply, -Pcompiler.warnings=-overrides)
     void info(String message, Object ... params);
 
     /**
@@ -86,6 +89,7 @@ public interface Logger {
      * @param params @see {@link #log(String, String, Object...)}
      * @see #log(String, String, Object...)
      */
+    @SuppressWarnings("overrides") // doesn't seem to suppress, need to give javac "-Xlint:-overrides" (in ply, -Pcompiler.warnings=-overrides)
     void warn(String message, Object ... params);
 
     /**
@@ -94,6 +98,7 @@ public interface Logger {
      * @param params @see {@link #log(String, String, Object...)}
      * @see #log(String, String, Object...)
      */
+    @SuppressWarnings("overrides") // doesn't seem to suppress, need to give javac "-Xlint:-overrides" (in ply, -Pcompiler.warnings=-overrides)
     void error(String message, Object ... params);
 
     /**

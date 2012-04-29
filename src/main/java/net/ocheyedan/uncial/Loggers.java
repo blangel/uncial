@@ -48,6 +48,7 @@ public final class Loggers {
      * @param forClass is the {@link Class} for which to perform logging
      * @return a {@link Logger} implementation specific to {@code forClass}
      */
+    @SuppressWarnings("unchecked")
     public static Logger get(Class<?> forClass) {
         if (loggers.containsKey(forClass)) {
             return loggers.get(forClass);
