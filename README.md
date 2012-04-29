@@ -170,3 +170,9 @@ SLF4J Support
 
 Uncial natively implements the __org.slf4j.Logger__ interface and is configured [properly](http://www.slf4j.org/faq.html#slf4j_compatible) so that as long as you have the uncial jar in your classpath and use the SLF4J interfaces, you'll automatically be using Uncial as your logger (and get the speed benefits too!).
 By default Uncial will use `printf` style parameterized logging.  If you want to use the SLF4J style (i.e., __{}__) parameterized logging you'll need to set the system parameter __uncial.slf4j__ (e.g., __-Duncial.slf4j=true__).
+
+#### Obtaining a Uncial logger with SLF4J
+
+You obtain it the same as any other SLF4J implementation:
+
+    private static final Logger LOG = LoggerFactory.getLogger(MyClass.class);
