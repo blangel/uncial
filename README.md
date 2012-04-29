@@ -6,15 +6,15 @@ Uncial is a fast and easy to use logging system. The goal is to be fast and easy
 Features
 --------
 
-* Uncial supports `printf` style format strings. Like [SLF4J](http://www.slf4j.org/)'s parameterized logging (see [here](http://www.slf4j.org/faq.html#logging_performance) for an explanation), this gives Uncial a performance boost without the user needing to write ugly "if enabled" code blocks.  Unlike, SLF4J, however, Uncial uses the standard `printf` format style in conjunction with varargs.  This style is familiar to developers and using varargs allows for easier usage when logging many arguments.
+* It's fast!  See __Speed__ below.
 
 * It's lean!  The code base consists of __1__ dependenciy, __19__ files and __< 2500__ lines of commented/javadoc/formatted code.
-
-* It's fast!  See __Speed__ below.
 
 * Supports dynamic configuration via __JMX__.
 
 * Natively implements [SLF4J](http://www.slf4j.org/).
+
+* Uncial supports `printf` style format strings. Like [SLF4J](http://www.slf4j.org/)'s parameterized logging (see [here](http://www.slf4j.org/faq.html#logging_performance) for an explanation), this gives Uncial a performance boost without the user needing to write ugly "if enabled" code blocks.  Unlike, SLF4J, however, Uncial uses the standard `printf` format style in conjunction with varargs.  This style is familiar to developers and using varargs allows for easier usage when logging many arguments.
 
 Usage
 -----
