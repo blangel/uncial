@@ -37,14 +37,7 @@ interface Distributor {
             }
         }
 
-        private static final ExecutorService logEventExecutor = Executors.newSingleThreadExecutor(new ThreadFactory() {
-            final ThreadFactory defaultThreadFactory = Executors.defaultThreadFactory();
-            @Override public Thread newThread(Runnable r) {
-                Thread defaultThread = defaultThreadFactory.newThread(r);
-                defaultThread.setDaemon(true);
-                return defaultThread;
-            }
-        });
+        private static final ExecutorService logEventExecutor = Executors.newSingleThreadExecutor(new DaemonThreadFactory());
 
         private final InvokingThread delegate = new InvokingThread();
 

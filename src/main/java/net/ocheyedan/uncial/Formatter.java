@@ -46,7 +46,8 @@ public interface Formatter {
                     lastWasBracket = false;
                     switch (character) {
                         case '}':
-                            buffer.append(String.valueOf(args[count++]));
+                            String replacement = (count >= args.length ? "" : String.valueOf(args[count++]));
+                            buffer.append(replacement);
                             break;
                         case '{':
                             buffer.append('{');

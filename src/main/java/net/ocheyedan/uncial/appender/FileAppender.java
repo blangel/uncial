@@ -44,6 +44,14 @@ public class FileAppender implements Appender {
         }
     }
 
+    @Override public void flush() {
+        try {
+            fileWriter.flush();
+        } catch (IOException ioe) {
+            System.err.println(ioe.getMessage());
+        }
+    }
+
     @Override public void close() {
         try {
             fileWriter.close();

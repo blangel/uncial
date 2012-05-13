@@ -2,8 +2,8 @@ package net.ocheyedan.uncial;
 
 import sun.reflect.Reflection;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.Collection;
+import java.util.concurrent.*;
 
 /**
  * User: blangel
@@ -40,6 +40,16 @@ public final class Loggers {
         } else {
             appenderExecutor = new Distributor.SeparateThread();
         }
+        // periodically flush the appenders
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(new DaemonThreadFactory());
+        scheduler.scheduleAtFixedRate(new Runnable() {
+            @Override public void run() {
+                Collection<UncialConfig.AppenderConfig> appenderConfigs = UncialConfig.get().getAppenderConfigs();
+                for (UncialConfig.AppenderConfig appenderConfig : appenderConfigs) {
+                    appenderConfig.appender.flush();
+                }
+            }
+        }, 15L, 15L, TimeUnit.SECONDS);
     }
 
     private static final ConcurrentMap<Class<?>, Logger> loggers = new ConcurrentHashMap<Class<?>, Logger>();

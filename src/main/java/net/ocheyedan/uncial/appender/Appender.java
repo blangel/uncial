@@ -21,6 +21,11 @@ public interface Appender {
     void handle(String message);
 
     /**
+     * Allows for periodic flushing of the underlying stream.
+     */
+    void flush();
+
+    /**
      * Allows implementations a hook into flushing their stream, if applicable, at JVM shutdown.
      */
     void close();

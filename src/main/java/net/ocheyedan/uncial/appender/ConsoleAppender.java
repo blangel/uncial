@@ -27,6 +27,10 @@ public class ConsoleAppender implements Appender {
         printStream.print(message);
     }
 
+    @Override public void flush() {
+        printStream.flush();
+    }
+
     @Override public void close() {
         printStream.flush();
     }

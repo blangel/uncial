@@ -138,6 +138,14 @@ public class RollingFileAppender implements Appender {
         }
     }
 
+    @Override public void flush() {
+        try {
+            writer.get().flush();
+        } catch (IOException ioe) {
+            System.err.println(ioe.getMessage());
+        }
+    }
+
     @Override public void close() {
         try {
             writer.get().close();
