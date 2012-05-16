@@ -29,6 +29,7 @@ public class UncialBenchmark extends SimpleBenchmark {
                 // nothing
             }
             @Override public void close() { }
+            @Override public void flush() { }
         });
     }
 

@@ -236,6 +236,7 @@ public class UncialConfigTest {
             }
             @Override public void handle(String logEvent) { }
             @Override public void close() { }
+            @Override public void flush() { }
         };
         UncialConfig uncialConfig = UncialConfig.get();
         // with no appenders
@@ -250,6 +251,7 @@ public class UncialConfigTest {
             }
             @Override public void handle(String logEvent) { }
             @Override public void close() { }
+            @Override public void flush() { }
         };
         uncialConfig.addAppender(mock1, "%F %m%n");
         assertTrue(uncialConfig.needsFileName(UncialConfig.class));
@@ -266,6 +268,7 @@ public class UncialConfigTest {
             }
             @Override public void handle(String logEvent) { }
             @Override public void close() { }
+            @Override public void flush() { }
         };
         UncialConfig uncialConfig = UncialConfig.get();
         // with no appenders
@@ -280,6 +283,7 @@ public class UncialConfigTest {
             }
             @Override public void handle(String logEvent) { }
             @Override public void close() { }
+            @Override public void flush() { }
         };
         uncialConfig.addAppender(mock1, "%L %m%n");
         assertTrue(uncialConfig.needsLineNumber(UncialConfig.class));
@@ -296,6 +300,7 @@ public class UncialConfigTest {
             }
             @Override public void handle(String logEvent) { }
             @Override public void close() { }
+            @Override public void flush() { }
         };
         UncialConfig uncialConfig = UncialConfig.get();
         // with no appenders
@@ -310,6 +315,7 @@ public class UncialConfigTest {
             }
             @Override public void handle(String logEvent) { }
             @Override public void close() { }
+            @Override public void flush() { }
         };
         uncialConfig.addAppender(mock1, "%M %m%n");
         assertTrue(uncialConfig.needsMethodName(UncialConfig.class));

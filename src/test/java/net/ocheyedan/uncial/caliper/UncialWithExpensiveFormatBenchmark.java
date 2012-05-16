@@ -27,6 +27,7 @@ public class UncialWithExpensiveFormatBenchmark extends SimpleBenchmark {
             // nothing
         }
         @Override public void close() { }
+        @Override public void flush() { }
     };
 
     private final Logger log = Loggers.get(UncialWithExpensiveFormatBenchmark.class);

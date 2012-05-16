@@ -2,6 +2,7 @@ package net.ocheyedan.uncial.caliper;
 
 import com.google.caliper.Runner;
 import com.google.caliper.SimpleBenchmark;
+import net.ocheyedan.uncial.Formatter;
 import net.ocheyedan.uncial.Logger;
 import net.ocheyedan.uncial.Loggers;
 import net.ocheyedan.uncial.UncialConfig;
@@ -23,7 +24,6 @@ public class LogSystemsSingleThreadedSlf4jBenchmark extends SimpleBenchmark {
     static {
         if (Boolean.getBoolean("caliper")) {
             System.setProperty("uncial.singleThreaded", "true");
-            System.setProperty("uncial.slf4j", "true");
         }
     }
 
@@ -33,7 +33,7 @@ public class LogSystemsSingleThreadedSlf4jBenchmark extends SimpleBenchmark {
         UncialConfig.get().addAppender(uncialAppender, UncialConfig.DEFAULT_APPENDER_FORMAT);
     }
 
-    private final Logger uncialLog = Loggers.get(LogSystemsBenchmark.class);
+    private final Logger uncialLog = Loggers.get(LogSystemsBenchmark.class, Formatter.Slf4j.class);
     private final org.slf4j.Logger logbackLogger = LoggerFactory.getLogger(LogSystemsBenchmark.class);
     private final org.apache.log4j.Logger log4jLogger = org.apache.log4j.Logger.getLogger(LogSystemsBenchmark.class);
 

@@ -1,5 +1,6 @@
 package org.slf4j.impl;
 
+import net.ocheyedan.uncial.Formatter;
 import net.ocheyedan.uncial.Loggers;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;
@@ -16,7 +17,7 @@ public class UncialLoggerFactory implements ILoggerFactory {
 
     @Override public Logger getLogger(String name) {
         try {
-            return Loggers.get(Class.forName(name));
+            return Loggers.get(Class.forName(name), Formatter.Slf4j.class);
         } catch (ClassNotFoundException cnfe) {
             return Loggers.get(Object.class);
         }

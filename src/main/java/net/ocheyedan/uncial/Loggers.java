@@ -15,13 +15,6 @@ import java.util.concurrent.*;
 public final class Loggers {
 
     /**
-     * Users can specify how to handle formatted/parameterized messages.  The default is to use {@literal printf}
-     * style (i.e., {@link String#format(String, Object...)}) but the user can specify {@literal SLF4J} style {@literal {}}
-     * formatting by specifying system property {@literal uncial.slf4j}.
-     */
-    private static final Class<? extends Formatter> formatterClass;
-
-    /**
      * Users can specify whether logging to the registered {@link net.ocheyedan.uncial.appender.Appender} objects happens
      * on a separate thread (the default) or whether logging happens on the user's invoking thread.  User's specify
      * single-threaded behavior via the system property {@literal uncial.singleThreaded}.
@@ -29,12 +22,6 @@ public final class Loggers {
     private static final Distributor appenderExecutor;
 
     static {
-        boolean useSlf4j = Boolean.getBoolean("uncial.slf4j");
-        if (useSlf4j) {
-            formatterClass = Formatter.Slf4j.class;
-        } else {
-            formatterClass = Formatter.Printf.class;
-        }
         if (Boolean.getBoolean("uncial.singleThreaded")) {
             appenderExecutor = new Distributor.InvokingThread();
         } else {
@@ -60,20 +47,31 @@ public final class Loggers {
      */
     @SuppressWarnings("unchecked")
     public static Logger get(Class<?> forClass) {
+        return get(forClass, Formatter.Printf.class);
+    }
+
+    /**
+     * @param forClass is the {@link Class} for which to perform logging
+     * @param formatterClass the class to use as the {@link Formatter}; either {@literal printf} style (i.e.,
+     *                       {@link String#format(String, Object...)}) or {@literal SLF4J} style (i.e., {@literal {}}).
+     * @return a {@link Logger} implementation specific to {@code forClass}
+     */
+    @SuppressWarnings("unchecked")
+    public static Logger get(Class<?> forClass, Class<? extends Formatter> formatterClass) {
         if (loggers.containsKey(forClass)) {
             return loggers.get(forClass);
         }
         UncialConfig.get().setLevelIfNotPresent(forClass.getName()); // setup the logger config
         // eliminate possibility of ever returning a different instance of the same logging class
         // constructing a logger for the same class is fine, but never return it.
-        loggers.putIfAbsent(forClass, new Uncial(forClass, newFormatter(), appenderExecutor));
+        loggers.putIfAbsent(forClass, new Uncial(forClass, newFormatter(formatterClass), appenderExecutor));
         return loggers.get(forClass);
     }
 
     /**
      * @return a new instance of the {@link Formatter} implementation.
      */
-    private static Formatter newFormatter() {
+    private static Formatter newFormatter(Class<? extends Formatter> formatterClass) {
         try {
             return formatterClass.newInstance();
         } catch (InstantiationException ie) {

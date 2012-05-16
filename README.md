@@ -8,7 +8,7 @@ Features
 
 * It's fast!  See __Speed__ below.
 
-* It's lean!  The code base consists of __1__ dependenciy, __19__ files and __< 2500__ lines of commented/javadoc/formatted code.
+* It's lean!  The code base consists of __1__ dependenciy, __20__ files and __< 2200__ lines of commented/javadoc/formatted code.
 
 * Supports dynamic configuration via __JMX__.
 
@@ -169,7 +169,7 @@ SLF4J Support
 --------------
 
 Uncial natively implements the __org.slf4j.Logger__ interface and is configured [properly](http://www.slf4j.org/faq.html#slf4j_compatible) so that as long as you have the uncial jar in your classpath and use the SLF4J interfaces, you'll automatically be using Uncial as your logger (and get the speed benefits too!).
-By default Uncial will use `printf` style parameterized logging.  If you want to use the SLF4J style (i.e., __{}__) parameterized logging you'll need to set the system parameter __uncial.slf4j__ (e.g., __-Duncial.slf4j=true__).
+Using Uncial via SLF4J will limit you to using the SLF4J style (i.e., __{}__) parameterized logging.  Uncial is planned to be augmented in the future to also support `printf` style logging with SLF4J.
 
 #### Obtaining a Uncial logger with SLF4J
 
