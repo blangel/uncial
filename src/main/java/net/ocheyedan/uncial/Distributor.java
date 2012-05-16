@@ -52,7 +52,7 @@ interface Distributor {
     static class InvokingThread implements Distributor {
 
         /**
-         * Install a {@literal JVM} shutdown hook to ensure the appenders get a change to flush.
+         * Install a {@literal JVM} shutdown hook to ensure the appender objects get a chance to flush.
          */
         InvokingThread() {
             Thread flusher = new Thread(new Runnable() {
