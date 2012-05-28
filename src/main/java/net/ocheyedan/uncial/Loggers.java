@@ -2,8 +2,10 @@ package net.ocheyedan.uncial;
 
 import sun.reflect.Reflection;
 
+import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * User: blangel
@@ -19,7 +21,7 @@ public final class Loggers {
      * on a separate thread (the default) or whether logging happens on the user's invoking thread.  User's specify
      * single-threaded behavior via the system property {@literal uncial.singleThreaded}.
      */
-    private static final Distributor appenderExecutor;
+    static final Distributor appenderExecutor;
 
     static {
         if (Boolean.getBoolean("uncial.singleThreaded")) {
@@ -40,6 +42,11 @@ public final class Loggers {
     }
 
     private static final ConcurrentMap<Class<?>, Logger> loggers = new ConcurrentHashMap<Class<?>, Logger>();
+
+    /**
+     * Cache of the {@link LoggerFactory} implementation.
+     */
+    private static final AtomicReference<LoggerFactory> loggerFactory = new AtomicReference<LoggerFactory>();
 
     /**
      * @param forClass is the {@link Class} for which to perform logging
@@ -64,8 +71,40 @@ public final class Loggers {
         UncialConfig.get().setLevelIfNotPresent(forClass.getName()); // setup the logger config
         // eliminate possibility of ever returning a different instance of the same logging class
         // constructing a logger for the same class is fine, but never return it.
-        loggers.putIfAbsent(forClass, new Uncial(forClass, newFormatter(formatterClass), appenderExecutor));
+        loggers.putIfAbsent(forClass, newLogger(forClass, newFormatter(formatterClass)));
         return loggers.get(forClass);
+    }
+
+    /**
+     * Constructs the {@literal Uncial} {@linkplain Logger} object.  This is how one can extend {@literal Uncial}
+     * to have {@literal Uncial} log calls (and consequently {@literal SLF4J} log calls, if using {@literal Uncial}
+     * as the {@literal SLF4J} logger) routed to a different logging mechanism (e.g., to {@literal Android}'s logging
+     * system).  To do this; create class {@literal net.ocheyedan.uncial.impl.LoggerFactory} which has a public
+     * static method named {@literal getSingleton} which returns the {@link LoggerFactory} implementation.
+     * @param forClass is the {@link Class} for which to perform logging.
+     * @param formatter the {@link Formatter} to use in case the
+     * @return the {@link Logger} implementation instance
+     */
+    private static Logger newLogger(Class<?> forClass, Formatter formatter) {
+        LoggerFactory loggerFactory;
+        sync:synchronized (Loggers.loggerFactory) {
+            if ((loggerFactory = Loggers.loggerFactory.get()) != null) {
+                break sync;
+            }
+            try {
+                Class loggerFactoryClass = Class.forName("net.ocheyedan.uncial.impl.LoggerFactory");
+                Method getSingletonMethod = loggerFactoryClass.getMethod("getSingleton");
+                if (LoggerFactory.class.isAssignableFrom(getSingletonMethod.getReturnType())) {
+                    loggerFactory = (LoggerFactory) getSingletonMethod.invoke(null);
+                } else {
+                    loggerFactory = new UncialLoggerFactory();
+                }
+            } catch (Exception e) {
+                loggerFactory = new UncialLoggerFactory();
+            }
+            Loggers.loggerFactory.set(loggerFactory);
+        }
+        return loggerFactory.construct(forClass, formatter);
     }
 
     /**

@@ -8,7 +8,7 @@ Features
 
 * It's fast!  See __Speed__ below.
 
-* It's lean!  The code base consists of __1__ dependenciy, __20__ files and __< 2200__ lines of commented/javadoc/formatted code.
+* It's lean!  The code base consists of __1__ dependenciy, __22__ files and __< 2400__ lines of commented/javadoc/formatted code.
 
 * Supports dynamic configuration via __JMX__.
 
@@ -37,26 +37,38 @@ Configuration
 No xml configuration.  Configuration is done in java code or via __JMX__.  By default, no `Appenders` are configured.  So at a minimum you'll need to configure an `Appender`.  Don't worry it's __easy__!
 Here are some examples:
 
+##### Get a handle to the configuration
+
+    UncialConfig config = UncialConfig.get();
+
 ##### Console appender (stdout)
 
-    UncialConfig.get().addAppender(new ConsoleAppender());
+    config.addAppender(new ConsoleAppender());
 
 ##### File appender
 
-    UncialConfig.get().addAppender(new FileAppender("/tmp/myapplication.log"));
+    config.addAppender(new FileAppender("/tmp/myapplication.log"));
 
-##### Multiple appenders
+##### Rolling file appender (time based)
 
-    UncialConfig.get().addAppender(new ConsoleAppender());
-    UncialConfig.get().addAppender(new FileAppender("/tmp/myapplication.log"));
+    config.addAppender(new RollingFileAppender("/tmp/myapplication.log", 1, TimeUnit.DAYS));
+
+##### Rolling file appender (size based)
+
+    config.addAppender(new RollingFileAppender("/tmp/myapplication.log", 5, SizeUnit.MEGABYTES));
+
+##### Multiple appenders (logs go to both)
+
+    config.addAppender(new ConsoleAppender());
+    config.addAppender(new FileAppender("/tmp/myapplication.log"));
 
 ##### Modify log levels for a set of classes
 
-    UncialConfig.get().setLevel("org.apache", Logger.warn); // any class with package starting with 'org.apache'
+    config.setLevel("org.apache", Logger.warn); // any class with package starting with 'org.apache'
 
 ##### Modify log levels for a particular class
 
-    UncialConfig.get().setLevel(StringUtils.class, Logger.error);
+    config.setLevel(StringUtils.class, Logger.error);
 
 
 As one would expect, all the above configurations can be mixed and matched.
