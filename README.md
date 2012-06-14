@@ -57,7 +57,7 @@ Here are some examples:
 
     config.addAppender(new RollingFileAppender("/tmp/myapplication.log", 5, SizeUnit.MEGABYTES));
 
-##### Multiple appenders (logs go to both)
+##### Multiple appenders (log statements go to both appenders)
 
     config.addAppender(new ConsoleAppender());
     config.addAppender(new FileAppender("/tmp/myapplication.log"));
